@@ -2,7 +2,7 @@ RT/TTS - Time-tracking software
 ===============================
 
 RT/TTS is a simple, text-based (curses) time-tracking application.  For more
-details, see the website at <http://www.rt.uk.eu.org/~river/pages/tts>.
+details, see the website at <http://loreley.flyingparchment.org.uk/~felicity/pages/tts>.
 
 RT/TTS has been tested on FreeBSD, NetBSD, Solaris, Cygwin and Linux, with the
 following caveats:
@@ -21,4 +21,4 @@ TTS uses autoconf and can be built as follows:
 
 After starting with 'rttts', type '?' for help.
 
-Send questions/comments/bugs/patches to <river@rt.uk.eu.org>.
+Send questions/comments/bugs/patches to <felicity@loreley.flyingparchment.org.uk>.

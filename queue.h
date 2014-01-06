@@ -28,7 +28,6 @@
  *
  *	@(#)queue.h	8.5 (Berkeley) 8/20/94
  * FreeBSD: release/9.0.0/sys/sys/queue.h 221843 2011-05-13 15:49:23Z mdf 
- * $Header: /cvsroot/rttts/queue.h,v 1.2 2012/11/06 21:52:32 river Exp $
  */
 
 #ifndef TTS_QUEUE_H

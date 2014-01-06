@@ -1,13 +1,12 @@
 /*
  * TTS - track your time.
- * Copyright (c) 2012, 2013 River Tarnell.
+ * Copyright (c) 2012-2014 Felicity Tarnell.
  *
  * Permission is granted to anyone to use this software for any purpose,
  * including commercial applications, and to alter it and redistribute it
  * freely. This software is provided 'as-is', without any express or implied
  * warranty.
  */
-/* $Header: /cvsroot/rttts/tts.c,v 1.77 2013/04/24 11:22:13 river Exp $ */
 
 #define		__EXTENSIONS__
 /*
@@ -38,7 +37,6 @@
 #include	<inttypes.h>
 
 #include	"config.h"
-#include	"version.h"
 
 #if defined HAVE_NCURSESW_CURSES_H
 #	include <ncursesw/curses.h>
@@ -1416,7 +1414,7 @@ void
 drawheader()
 {
 	wmove(titwin, 0, 0);
-	waddstr(titwin, "TTS " TTS_VERSION " - Type '?' for help");
+	waddstr(titwin, "TTS " PACKAGE_VERSION " - Type '?' for help");
 	if (itime > 0) {
 	WCHAR	str[128];
 	int	h, m, s;
