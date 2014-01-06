@@ -1,0 +1,24 @@
+RT/TTS - Time-tracking software
+===============================
+
+RT/TTS is a simple, text-based (curses) time-tracking application.  For more
+details, see the website at <http://www.rt.uk.eu.org/~river/pages/tts>.
+
+RT/TTS has been tested on FreeBSD, NetBSD, Solaris, Cygwin and Linux, with the
+following caveats:
+
+	- Wide character support does not work with Unicode using Solaris
+	  curses, which appears to only support EUC.  Use ncurses instead.
+
+	- Wide character support does not work at all on Cygwin; TTS must
+	  be compiled with --without-ncursesw.  Patches welcome.
+
+TTS uses autoconf and can be built as follows:
+
+	$ ./configure
+	$ make
+	# make install
+
+After starting with 'rttts', type '?' for help.
+
+Send questions/comments/bugs/patches to <river@rt.uk.eu.org>.

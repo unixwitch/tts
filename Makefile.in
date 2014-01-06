@@ -1,0 +1,25 @@
+CC		= @CC@
+CPPFLAGS	= @CPPFLAGS@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+INSTALL		= @INSTALL@
+
+OBJS		= tts.o
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+
+tts: ${OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} ${OBJS} -o tts ${LIBS} @CURSES_LIB@
+
+install:
+	${INSTALL} -d -m 0755 ${bindir}
+	${INSTALL} -c -m 0755 tts ${bindir}
+
+.c.o:
+	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
+
+clean:
+	rm -f tts *.o

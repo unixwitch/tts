@@ -1,0 +1,86 @@
+#
+# This is a sample configuration file for RT/TTS.  Copy it to ~/.ttsrc and
+# edit it as appropriate.
+#
+
+#### Interface options
+#
+# Whether to automatically advance the cursor when 'm'arking or 'd'eleting
+# an entry.
+
+#set mark_advance 1
+#set delete_advance 1
+
+#### Bindings
+#
+# Use the 'bind' command to (re)define keybindings.  Type '?' while TTS is
+# running for a full list of key bindings.
+#
+# You can bind to a single letter, or a symbolic key name like <ENTER>,
+# <TAB>, <CTRL-C> or <F12>.
+
+# Here's one for 'vi' users:
+bind j next
+bind k prev
+
+#### Styling
+#
+# You can style UI elements with the 'style' command.  Its syntax is:
+#
+#	style <element> <foreground> [background]
+#
+# The following elements can be styled:
+#
+# 	header		(the top line of the screen)
+# 	status		(the status line at the bottom)
+# 	date		(the date header)
+# 	entry		(a normal entry)
+# 	selected	(the currently highlighted entry)
+# 	running		(the currently running entry)
+#
+# Behaviour when the highlighted entry is also running is slightly special.
+# In this case, the colours are taken from the 'selected' style, and the
+# attributes of both 'selected' and 'running' are merge.  It's therefore a
+# good idea to apply a style such as 'bold' to the running entry.
+#
+# The following styles are available:
+#
+# 	normal		(no styling)
+# 	bold
+# 	reverse
+# 	blink
+# 	underline
+# 	dim
+# 	standout	(the best highlighting for your terminal; often the same
+# 			 as 'reverse')
+#
+# In addition, the following colours can be used:
+#
+#	default
+# 	black
+# 	red
+# 	green
+# 	yellow
+# 	blue
+# 	magenta
+# 	cyan
+# 	white
+#
+# This is the default styling:
+#
+# 	style header normal
+# 	style status normal
+# 	style entry normal
+# 	style selected normal
+# 	style running bold
+# 	style date underline
+#
+# The following style makes TTS look like Mutt.
+#
+style header yellow,bold blue
+style status yellow,bold blue
+style entry white black
+style selected yellow,bold red
+# Use bold *and* underline, because we already bolded 'selected' above.
+style running bold,underline
+style date underline,bold
