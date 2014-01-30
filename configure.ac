@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([RT/TTS], [1.77-DEV], [felicity@loreley.flyingparchment.org.uk])
+AC_INIT([RT/TTS], [T.1.0-79], [felicity@loreley.flyingparchment.org.uk])
 AC_CONFIG_SRCDIR([tts.c])
 AC_CONFIG_HEADERS([config.h])
 
