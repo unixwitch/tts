@@ -1,6 +1,8 @@
+VPATH		= @top_srcdir@
+
 CC		= @CC@
 CPPFLAGS	= @CPPFLAGS@
-CFLAGS		= @CFLAGS@
+CFLAGS		= @CFLAGS@ -I@top_srcdir@ -I@top_builddir@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 INSTALL		= @INSTALL@
