@@ -1,0 +1,7 @@
+language: c
+compiler:
+  - gcc
+  - clang
+env:
+  - CPPFLAGS="-Wall -Wno-unused-parameter -Wno-parentheses -Wno-implicit-int -Wno-missing-field-initializers"
+script: mkdir build && cd build && ../configure && make && sudo make install
