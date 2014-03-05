@@ -38,6 +38,19 @@
 
 #include	"config.h"
 
+#ifdef	HAVE_IOREGISTERFORSYSTEMPOWER
+# define USE_DARWIN_POWER
+
+# include	<mach/mach_port.h>
+# include	<mach/mach_interface.h>
+# include	<mach/mach_init.h>
+
+# include	<IOKit/pwr_mgt/IOPMLib.h>
+# include	<IOKit/IOMessage.h>
+
+# include	<pthread.h>
+#endif
+
 #if defined HAVE_NCURSESW_CURSES_H
 #	include <ncursesw/curses.h>
 #elif defined HAVE_NCURSESW_H
@@ -460,6 +473,84 @@ static variable_t variables[] = {
 
 static variable_t	*find_variable(const WCHAR *name);
 
+#ifdef USE_DARWIN_POWER
+static pthread_t power_thread;
+static io_connect_t root_port;
+static volatile sig_atomic_t donesleep;
+static time_t sleeptime;
+
+static void *power_thread_run(void *);
+static void  power_event(void *, io_service_t, natural_t, void *);
+static void  prompt_sleep(void);
+
+static void
+sigsleep(sig)
+{
+/* Delivered from the power thread as SIGUSR1 */
+	donesleep = 1;
+}
+
+/*
+ * Darwin power notifications are delivered from IOKit via Mach ports, which
+ * is incompatible with TTS's curses-based main loop.  We therefore spawn a
+ * separate thread to listen for these events, and when we receive one, we
+ * translate it into a signal (SIGUSR1) which is delivered to the main thread
+ * to handle.  The signal will interrupt getch().
+ */
+static void *
+power_thread_run(arg)
+	void	*arg;
+{
+sigset_t		ss;
+IONotificationPortRef	port_ref;
+io_object_t		notifier;
+
+/* Block SIGUSR1 so it's always delivered to the main thread, not us */
+	sigemptyset(&ss);
+	sigaddset(&ss, SIGUSR1);
+	pthread_sigmask(SIG_BLOCK, &ss, NULL);
+
+/* Register a handler for sleep and wake events */
+	root_port = IORegisterForSystemPower(NULL, &port_ref, power_event,
+			&notifier);
+	CFRunLoopAddSource(CFRunLoopGetCurrent(),
+		IONotificationPortGetRunLoopSource(port_ref),
+		kCFRunLoopCommonModes);
+	CFRunLoopRun();
+
+	/*NOTREACHED*/
+	return NULL;
+}
+
+static void
+power_event(ref, service, msgtype, arg)
+	void		*ref, *arg;
+	io_service_t	 service;
+	natural_t	 msgtype;
+{
+static time_t	sleep_started;
+time_t		diff;
+
+	switch (msgtype) {
+	case kIOMessageSystemWillSleep:
+		/* System is about to sleep; save the current time */
+		time(&sleep_started);
+		IOAllowPowerChange(root_port, (long) arg);
+		break;
+
+	case kIOMessageSystemHasPoweredOn:
+		/* System has finished wake-up; calculate the sleep time and
+		 * notify the main thread.
+		 */
+		time(&diff);
+		diff -= sleep_started;
+		sleeptime += diff;
+		raise(SIGUSR1);
+		break;
+	}
+}
+#endif
+
 static void
 sigexit(sig)
 {
@@ -478,6 +569,11 @@ char		 rcfile[PATH_MAX + 1];
 
 	signal(SIGTERM, sigexit);
 	signal(SIGINT, sigexit);
+
+#ifdef USE_DARWIN_POWER
+	signal(SIGUSR1, sigsleep);
+	pthread_create(&power_thread, NULL, power_thread_run, NULL);
+#endif
 
 	searchhist = hist_new();
 	prompthist = hist_new();
@@ -597,6 +693,9 @@ char		 rcfile[PATH_MAX + 1];
 		if (doexit)
 			break;
 
+		if (donesleep)
+			prompt_sleep();
+
 		drawheader();
 		drawentries();
 		wrefresh(listwin);
@@ -604,6 +703,8 @@ char		 rcfile[PATH_MAX + 1];
 		if (GETCH(&c) == ERR) {
 			if (doexit)
 				break;
+			if (donesleep)
+				prompt_sleep();
 			if (time(NULL) - laststatus >= 2)
 				drawstatus(WIDE(""));
 			if (time(NULL) - lastsave > 60)
@@ -2641,3 +2742,49 @@ int	 h, m, s;
 	*ss = s;
 	return 0;
 }
+
+#ifdef	USE_DARWIN_POWER
+static void
+prompt_sleep()
+{
+/*
+ * We woke from sleep.  If there's a running entry, prompt the user to
+ * subtract the time spent sleeping, in case they forgot to turn off
+ * the timer.
+ */
+entry_t	*en, *ten;
+int	 nmarked = 0;
+WCHAR	 pr[128];
+int	 h, m, s = 0;
+
+	donesleep = 0;
+
+/* Only prompt if an entry is running */
+	if (!running)
+		return;
+
+/* Draw the prompt */
+	s = sleeptime;
+
+	h = s / (60 * 60);
+	s %= (60 * 60);
+	m = s / 60;
+	s %= 60;
+
+	SNPRINTF(pr, WSIZEOF(pr),
+		 WIDE("Remove %02d:%02d:%02d time asleep from running entry?"),
+		 h, m, s);
+
+	if (!yesno(pr)) {
+		sleeptime = 0;
+		return;
+	}
+
+/* 
+ * This is a bit of a fudge, but it has the desired effect.  Alternatively
+ * we could merge en_started into en_secs, then subtract that.
+ */
+	running->en_started += sleeptime;
+	sleeptime = 0;
+}
+#endif	/* USE_DARWIN_POWER */
