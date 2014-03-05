@@ -10,9 +10,8 @@
 
 #set mark_advance 1
 #set delete_advance 1
-#set bill_advance 0
 
-#### Miscellaneous options
+#### Billing options
 #
 # If set, show billable time in each daily summary.
 
@@ -23,6 +22,16 @@
 # it should be wrapped in "quote marks".
 
 #set auto_non_billable [INT]
+
+# If set, when calculating billing time for show_billable, each entry will be
+# rounded up to this many minutes.  For example, if you bill in blocks of
+# 15 minutes:
+
+#set bill_increment 15
+
+# If set, automatically advance the cursor when marking an entry as billable.
+
+#set bill_advance 0
 
 #### Bindings
 #

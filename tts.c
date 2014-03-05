@@ -35,6 +35,7 @@
 #include	<locale.h>
 #include	<stdarg.h>
 #include	<inttypes.h>
+#include	<math.h>
 
 #include	"config.h"
 
@@ -176,7 +177,7 @@ static void entry_start(entry_t *);
 static void entry_stop(entry_t *);
 static void entry_free(entry_t *);
 static void entry_account(entry_t *);
-static time_t entry_time_for_day(time_t, int);
+static time_t entry_time_for_day(time_t, int, int);
 
 #define time_day(t) (((t) / (60 * 60 * 24)) * (60 * 60 * 24))
 #define entry_day(e) (time_day((e)->en_created))
@@ -462,6 +463,7 @@ static int show_billable = 0;
 static int delete_advance = 1;
 static int mark_advance = 1;
 static int bill_advance = 0;
+static int bill_increment = 0;
 static char *auto_nonbillable;
 
 #define VTYPE_INT	1
@@ -479,7 +481,8 @@ static variable_t variables[] = {
 	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance },
 	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance },
 	{ WIDE("show_billable"),	VTYPE_BOOL,	&show_billable },
-	{ WIDE("auto_non_billable"),	VTYPE_STRING,	&auto_nonbillable }
+	{ WIDE("auto_non_billable"),	VTYPE_STRING,	&auto_nonbillable },
+	{ WIDE("bill_increment"),	VTYPE_INT,	&bill_increment }
 };
 
 static variable_t	*find_variable(const WCHAR *name);
@@ -1827,9 +1830,9 @@ chtype	 oldbg;
 		if (lastday != entry_day(en)) {
 		struct tm	*lt;
 		WCHAR		 lbl[128];
-		time_t		 itime = entry_time_for_day(entry_day(en), 1),
-				 ntime = entry_time_for_day(entry_day(en), 0),
-				 btime = entry_time_for_day(entry_day(en), 2);
+		time_t		 itime = entry_time_for_day(entry_day(en), 1, 0),
+				 ntime = entry_time_for_day(entry_day(en), 0, 0),
+				 btime = entry_time_for_day(entry_day(en), 2, bill_increment);
 		int		 hi, mi, si,
 				 hn, mn, sn,
 				 hb, mb, sb,
@@ -2044,29 +2047,42 @@ entry_account(en)
 /*
  * Return the amount of time for the day on which the timestamp .when falls.
  * If .inv is 0, sum non-invoiced entries; if 1, sum invoiced entries; if
- * 2, sum billable entries; if -1, sum all entries.
+ * 2, sum billable entries; if -1, sum all entries.  If .incr is non-zero,
+ * individual entry time will be rounded up to intervals of that many minutes.
  */
 time_t
-entry_time_for_day(when, inv)
+entry_time_for_day(when, inv, incr)
 	time_t	when;
 {
 time_t	 day = time_day(when);
 time_t	 sum = 0;
 entry_t	*en;
+int	 rnd = incr * 60;
 	TAILQ_FOREACH(en, &entries, en_entries) {
+	time_t	n;
+
 		if (entry_day(en) > day)
 			continue;
 		if (entry_day(en) < day)
 			break;
+
 		if (inv == 0 && en->en_flags.efl_invoiced)
 			continue;
 		if (inv == 1 && !en->en_flags.efl_invoiced)
 			continue;
 		if (inv == 2 && en->en_flags.efl_nonbillable)
 			continue;
-		sum += en->en_secs;
+
+		n = en->en_secs;
 		if (en->en_started)
-			sum += time(NULL) - en->en_started;
+			n += time(NULL) - en->en_started;
+
+		if (!n)
+			continue;
+
+		if (rnd)
+			n = (1 + round((n - 1) / rnd)) * rnd;
+		sum += n;
 	}
 	return sum;
 }
@@ -2621,6 +2637,10 @@ int		 val;
 
 	case VTYPE_STRING:
 		*(char **)var->va_addr = STRDUP(argv[2]);
+		break;
+
+	case VTYPE_INT:
+		*(int *)var->va_addr = atoi(argv[2]);
 		break;
 	}
 }
