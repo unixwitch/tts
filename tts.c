@@ -806,6 +806,10 @@ entry_t	*en;
 	}
 
 	en = entry_new(name);
+
+	if (auto_nonbillable && STRSTR(name, auto_nonbillable))
+		en->en_flags.efl_nonbillable = 1;
+
 	curent = en;
 	kedtime();
 	save();
