@@ -2418,19 +2418,51 @@ const WCHAR	*p, *q;
 
 	for (;;) {
 	ptrdiff_t	sz;
+	int		qskip = 0;
 
+	/* Skip leading whitespace */
 		while (ISSPACE(*p))
 			p++;
 
+	/* End of string - no more arguments */
 		if (!*p)
 			break;
 
 		q = p;
 
-		/* Find the next seperator */
-		while (!ISSPACE(*q) && *q)
-			q++;
+		if (*q == '"') {
+	/* Quoted string - scan for end of string */
+		int	isbsl = 0;
+			p++;
 
+			while (*++q) {
+	/* Handle escaping with backslash; currently works but the \ isn't
+	 * removed from the string.
+	 */
+				if (*q == '\\') {
+					isbsl = 1;
+					continue;
+				}
+
+				if (!isbsl && (*q == '"'))
+					break;
+
+				isbsl = 0;
+			}
+	/* At this point, *q == '"'.  If it's NUL instead, then the
+	 * string was not terminated with a closing '"' before the end 
+	 * of the line.  We could give an error here, but it seems
+	 * more useful to just accept it.
+	 */
+			if (*q == '"')
+				qskip = 1;
+		} else {
+	/* Not quoted - just find the next whitespace */
+			while (!ISSPACE(*q) && *q)
+				q++;
+		}
+
+	/* Copy the argument (which is sz bytes long) into the result array */
 		sz = (q - p);
 		*res = realloc(*res, sizeof(WCHAR *) * (ntoks + 1));
 		(*res)[ntoks] = malloc(sizeof(WCHAR) * sz + 1);
@@ -2438,9 +2470,16 @@ const WCHAR	*p, *q;
 		(*res)[ntoks][sz] = 0;
 		ntoks++;
 
+		if (qskip)
+			q += qskip;
+
 		while (ISSPACE(*q))
 			q++;
 
+	/*
+	 * q is the start of the next token (with leading whitespace); reset
+	 * p to process the next argument.
+	 */
 		if (!*q)
 			break;
 		p = q;

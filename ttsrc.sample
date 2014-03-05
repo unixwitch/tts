@@ -15,11 +15,13 @@
 #### Miscellaneous options
 #
 # If set, show billable time in each daily summary.
+
 #set show_billable 1
 
 # If this is set, and a newly added entry contains this string, the entry wil
-# be automatically marked as non-billable.  The string can only be a single
-# word and must not be put in quotes.
+# be automatically marked as non-billable.  If the string contains whitespace,
+# it should be wrapped in "quote marks".
+
 #set auto_non_billable [INT]
 
 #### Bindings
