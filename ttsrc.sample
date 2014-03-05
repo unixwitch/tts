@@ -12,6 +12,11 @@
 #set delete_advance 1
 #set bill_advance 0
 
+#### Miscellaneous options
+#
+# If set, show billable time in each daily summary.
+#set show_billable 1
+
 #### Bindings
 #
 # Use the 'bind' command to (re)define keybindings.  Type '?' while TTS is

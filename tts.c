@@ -456,6 +456,7 @@ static style_t
 
 static time_t itime = 0;
 
+static int show_billable = 0;
 static int delete_advance = 1;
 static int mark_advance = 1;
 static int bill_advance = 0;
@@ -473,7 +474,8 @@ typedef struct variable {
 static variable_t variables[] = {
 	{ WIDE("delete_advance"),	VTYPE_BOOL,	&delete_advance },
 	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance },
-	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance }
+	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance },
+	{ WIDE("show_billable"),	VTYPE_BOOL,	&show_billable }
 };
 
 static variable_t	*find_variable(const WCHAR *name);
@@ -1813,14 +1815,17 @@ chtype	 oldbg;
 		struct tm	*lt;
 		WCHAR		 lbl[128];
 		time_t		 itime = entry_time_for_day(entry_day(en), 1),
-				 ntime = entry_time_for_day(entry_day(en), 0);
+				 ntime = entry_time_for_day(entry_day(en), 0),
+				 btime = entry_time_for_day(entry_day(en), 2);
 		int		 hi, mi, si,
 				 hn, mn, sn,
+				 hb, mb, sb,
 				 ht, mt, st;
 		WCHAR		 hdrtext[256];
 
 			time_to_hms(itime, hi, mi, si);
 			time_to_hms(ntime, hn, mn, sn);
+			time_to_hms(btime, hb, mb, sb);
 			time_to_hms(itime + ntime, ht, mt, st);
 
 			oldbg = getbkgd(listwin);
@@ -1840,7 +1845,16 @@ chtype	 oldbg;
 			lt = localtime(&lastday);
 
 			STRFTIME(lbl, WSIZEOF(lbl), WIDE("%A, %d %B %Y"), lt);
-			SNPRINTF(hdrtext, WSIZEOF(hdrtext), WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
+			if (show_billable)
+				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
+					 WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
+					"N:%02d:%02d:%02d / T:%02d:%02d:%02d / "
+					"B:%02d:%02d:%02d]"),
+					lbl, hi, mi, si, hn, mn, sn, ht, mt, st,
+					hb, mb, sb);
+			else
+				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
+					WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
 					"N:%02d:%02d:%02d / T:%02d:%02d:%02d]"),
 					lbl, hi, mi, si, hn, mn, sn, ht, mt, st);
 
@@ -2017,7 +2031,7 @@ entry_account(en)
 /*
  * Return the amount of time for the day on which the timestamp .when falls.
  * If .inv is 0, sum non-invoiced entries; if 1, sum invoiced entries; if
- * -1, sum all entries.
+ * 2, sum billable entries; if -1, sum all entries.
  */
 time_t
 entry_time_for_day(when, inv)
@@ -2034,6 +2048,8 @@ entry_t	*en;
 		if (inv == 0 && en->en_flags.efl_invoiced)
 			continue;
 		if (inv == 1 && !en->en_flags.efl_invoiced)
+			continue;
+		if (inv == 2 && en->en_flags.efl_nonbillable)
 			continue;
 		sum += en->en_secs;
 		if (en->en_started)
