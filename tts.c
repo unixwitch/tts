@@ -460,6 +460,7 @@ static int show_billable = 0;
 static int delete_advance = 1;
 static int mark_advance = 1;
 static int bill_advance = 0;
+static char *auto_nonbillable;
 
 #define VTYPE_INT	1
 #define VTYPE_BOOL	2
@@ -475,7 +476,8 @@ static variable_t variables[] = {
 	{ WIDE("delete_advance"),	VTYPE_BOOL,	&delete_advance },
 	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance },
 	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance },
-	{ WIDE("show_billable"),	VTYPE_BOOL,	&show_billable }
+	{ WIDE("show_billable"),	VTYPE_BOOL,	&show_billable },
+	{ WIDE("auto_non_billable"),	VTYPE_STRING,	&auto_nonbillable }
 };
 
 static variable_t	*find_variable(const WCHAR *name);
@@ -774,6 +776,10 @@ entry_t	*en;
 		return;
 	}
 	en = entry_new(name);
+
+	if (auto_nonbillable && STRSTR(name, auto_nonbillable))
+		en->en_flags.efl_nonbillable = 1;
+
 	entry_start(en);
 	curent = en;
 	save();
@@ -2535,6 +2541,7 @@ c_set(argc, argv)
 	WCHAR	**argv;
 {
 variable_t	*var;
+int		 val;
 
 	if (argc != 3) {
 		cmderr(WIDE("Usage: set <variable> <value>"));
@@ -2547,8 +2554,7 @@ variable_t	*var;
 	}
 
 	switch (var->va_type) {
-	case VTYPE_BOOL: {
-	int	val;
+	case VTYPE_BOOL:
 		if (STRCMP(argv[2], WIDE("true")) == 0 ||
 		    STRCMP(argv[2], WIDE("yes")) == 0 ||
 		    STRCMP(argv[2], WIDE("on")) == 0 ||
@@ -2566,7 +2572,10 @@ variable_t	*var;
 
 		*(int *)var->va_addr = val;
 		break;
-	}
+
+	case VTYPE_STRING:
+		*(char **)var->va_addr = STRDUP(argv[2]);
+		break;
 	}
 }
 

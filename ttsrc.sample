@@ -17,6 +17,11 @@
 # If set, show billable time in each daily summary.
 #set show_billable 1
 
+# If this is set, and a newly added entry contains this string, the entry wil
+# be automatically marked as non-billable.  The string can only be a single
+# word and must not be put in quotes.
+#set auto_non_billable [INT]
+
 #### Bindings
 #
 # Use the 'bind' command to (re)define keybindings.  Type '?' while TTS is
