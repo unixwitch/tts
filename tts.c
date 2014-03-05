@@ -160,6 +160,7 @@ typedef struct entry {
 		int	efl_invoiced:1;
 		int	efl_marked:1;
 		int	efl_deleted:1;
+		int	efl_nonbillable:1;
 	}			 en_flags;
 	TAILQ_ENTRY(entry)	 en_entries;
 } entry_t;
@@ -229,6 +230,7 @@ static void kup(void);
 static void kdown(void);
 static void ktoggle(void);
 static void kinvoiced(void);
+static void kbillable(void);
 static void keddesc(void);
 static void kedtime(void);
 static void ktoggleinv(void);
@@ -260,7 +262,8 @@ static function_t funcs[] = {
 	{ WIDE("delete"),	kmarkdel,	WIDE("delete the current entry") },
 	{ WIDE("undelete"),	kundel,		WIDE("undelete the current entry") },
 	{ WIDE("quit"),		kquit,		WIDE("exit TTS") },
-	{ WIDE("invoice"),	kinvoiced,	WIDE("set the current entry as invoiced") },
+	{ WIDE("invoice"),	kinvoiced,	WIDE("toggle current entry as invoiced") },
+	{ WIDE("billable"),	kbillable,	WIDE("toggle current entry as billable") },
 	{ WIDE("mark"),		kmark,		WIDE("mark the current entry") },
 	{ WIDE("unmarkall"),	kunmarkall,	WIDE("unmark all entries") },
 	{ WIDE("startstop"),	ktoggle,	WIDE("start or stop the timer") },
@@ -455,6 +458,7 @@ static time_t itime = 0;
 
 static int delete_advance = 1;
 static int mark_advance = 1;
+static int bill_advance = 0;
 
 #define VTYPE_INT	1
 #define VTYPE_BOOL	2
@@ -468,7 +472,8 @@ typedef struct variable {
 
 static variable_t variables[] = {
 	{ WIDE("delete_advance"),	VTYPE_BOOL,	&delete_advance },
-	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance }
+	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance },
+	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance }
 };
 
 static variable_t	*find_variable(const WCHAR *name);
@@ -649,6 +654,7 @@ char		 rcfile[PATH_MAX + 1];
 	bind_key(WIDE("q"),		WIDE("quit"));
 	bind_key(WIDE("<CTRL-C>"),	WIDE("quit"));
 	bind_key(WIDE("i"),		WIDE("invoice"));
+	bind_key(WIDE("b"),		WIDE("billable"));
 	bind_key(WIDE("m"),		WIDE("mark"));
 	bind_key(WIDE("U"),		WIDE("unmarkall"));
 	bind_key(WIDE("<SPACE>"),	WIDE("startstop"));
@@ -1013,6 +1019,37 @@ int	 anymarked = 0;
 		if (!curent->en_flags.efl_invoiced)
 			return;
 	}
+}
+
+void
+kbillable()
+{
+entry_t	*en;
+int	 anymarked = 0;
+
+	TAILQ_FOREACH(en, &entries, en_entries) {
+		if (!en->en_flags.efl_marked)
+			continue;
+		anymarked = 1;
+		en->en_flags.efl_nonbillable = !en->en_flags.efl_nonbillable;
+		en->en_flags.efl_marked = 0;
+	}
+
+	if (anymarked) {
+		save();
+		return;
+	}
+
+	if (!curent) {
+		drawstatus(WIDE("No entry selected."));
+		return;
+	}
+
+	curent->en_flags.efl_nonbillable = !curent->en_flags.efl_nonbillable;
+	save();
+
+	if (bill_advance)
+		cursadvance();
 }
 
 void
@@ -1885,6 +1922,11 @@ chtype	 oldbg;
 		else
 			*p++ = ' ';
 
+		if (!en->en_flags.efl_nonbillable)
+			*p++ = 'B';
+		else
+			*p++ = ' ';
+
 		if (en->en_flags.efl_deleted)
 			*p++ = 'D';
 		else
@@ -2046,7 +2088,7 @@ entry_t	*en;
 			continue;
 		}
 
-		if (SSCANF(line, WIDE("%lu %lu %9"FMT_L"[i-] %4095"FMT_L"[^\n]\n"),
+		if (SSCANF(line, WIDE("%lu %lu %9"FMT_L"[in-] %4095"FMT_L"[^\n]\n"),
 				&cre, &secs, flags, desc) != 4) {
 			errbox(WIDE("Can't read %s: invalid entry format"), statfile);
 			fclose(f);
@@ -2063,6 +2105,10 @@ entry_t	*en;
 
 			case 'i':
 				en->en_flags.efl_invoiced = 1;
+				break;
+
+			case 'n':
+				en->en_flags.efl_nonbillable = 1;
 				break;
 
 			default:
@@ -2132,6 +2178,8 @@ entry_t	*en;
 		memset(flags, 0, sizeof(flags));
 		if (en->en_flags.efl_invoiced)
 			*fp++ = 'i';
+		if (en->en_flags.efl_nonbillable)
+			*fp++ = 'n';
 
 		n = en->en_secs;
 		if (en->en_started)

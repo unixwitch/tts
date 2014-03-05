@@ -5,11 +5,12 @@
 
 #### Interface options
 #
-# Whether to automatically advance the cursor when 'm'arking or 'd'eleting
-# an entry.
+# Whether to automatically advance the cursor when 'm'arking, 'd'eleting
+# or 'b'illing an entry.
 
 #set mark_advance 1
 #set delete_advance 1
+#set bill_advance 0
 
 #### Bindings
 #
