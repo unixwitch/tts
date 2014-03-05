@@ -562,7 +562,6 @@ main(argc, argv)
 	char	**argv;
 {
 struct passwd	*pw;
-int		 i;
 char		 rcfile[PATH_MAX + 1];
 
 	setlocale(LC_ALL, "");
@@ -687,7 +686,6 @@ char		 rcfile[PATH_MAX + 1];
 
 	for (;;) {
 	INT		 c;
-	size_t		 s;
 	binding_t	*bi;
 
 		if (doexit)
@@ -825,8 +823,7 @@ kundel()
 void
 kmarkdel()
 {
-entry_t	*newcur;
-entry_t	*en, *ten;
+entry_t	*en;
 int	 nmarked = 0;
 
 	TAILQ_FOREACH(en, &entries, en_entries) {
@@ -1353,7 +1350,6 @@ binding_t	*bi;
 void
 kmark()
 {
-entry_t	*next;
 	if (!curent) {
 		drawstatus(WIDE("No entry selected."));
 		return;
@@ -1784,7 +1780,6 @@ chtype	 oldbg;
 		int		 hi, mi, si,
 				 hn, mn, sn,
 				 ht, mt, st;
-		WCHAR		 hdrtime;
 		WCHAR		 hdrtext[256];
 
 			time_to_hms(itime, hi, mi, si);
@@ -2463,7 +2458,6 @@ variable_t *
 find_variable(name)
 	WCHAR const	*name;
 {
-variable_t	*v;
 size_t		 i;
 	for (i = 0; i < sizeof(variables) / sizeof(*variables); i++)
 		if (STRCMP(name, variables[i].va_name) == 0)
@@ -2752,8 +2746,6 @@ prompt_sleep()
  * subtract the time spent sleeping, in case they forgot to turn off
  * the timer.
  */
-entry_t	*en, *ten;
-int	 nmarked = 0;
 WCHAR	 pr[128];
 int	 h, m, s = 0;
 
