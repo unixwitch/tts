@@ -1,10 +1,10 @@
-RT/TTS - Time-tracking software
-===============================
+TTS - Time-tracking software
+============================
 
-RT/TTS is a simple, text-based (curses) time-tracking application.  For more
+TTS is a simple, text-based (curses) time-tracking application.  For more
 details, see the website at <http://loreley.flyingparchment.org.uk/~felicity/pages/tts>.
 
-RT/TTS has been tested on FreeBSD, NetBSD, Solaris, Cygwin and Linux, with the
+TTS has been tested on FreeBSD, NetBSD, Solaris, Cygwin and Linux, with the
 following caveats:
 
 	- Wide character support does not work with Unicode using Solaris
@@ -19,6 +19,21 @@ TTS uses autoconf and can be built as follows:
 	$ make
 	# make install
 
-After starting with 'rttts', type '?' for help.
+After starting with 'tts', type '?' for help.
+
+### Quick start:
+
+* Press 'a' to add a new entry, and enter its name.  The timer starts running.
+* Press space to toggle the timer on and off.
+* Press 'A' to add an entry and have TTS prompt for its initial time.
+* Press 'd' to delete an entry, and 'u' to undelete it.
+* Press 'e' to edit an entry's description, or '\' to edit its time.
+* Press '+' to add time to an entry or '-' to remove time.
+* Press '?' for more help, and look at the sample .ttsrc.
+* When you're working on something and something else comes up, press 'r' to
+  start the interrupt timer.  When you're done with the other thing, press 'r'
+  again to assign the interrupt time to a new entry.
+
+### Contact
 
 Send questions/comments/bugs/patches to <felicity@loreley.flyingparchment.org.uk>.

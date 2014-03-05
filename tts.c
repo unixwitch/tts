@@ -250,7 +250,6 @@ static void ksync(void);
 static void kexec(void);
 static void kmerge(void);
 static void kint(void);
-static void kmarkint(void);
 
 typedef struct function {
 	const WCHAR	*fn_name;
@@ -283,7 +282,6 @@ static function_t funcs[] = {
 	{ WIDE("execute"),	kexec,		WIDE("execute a configuration command") },
 	{ WIDE("merge"),	kmerge,		WIDE("merge marked entries into current entry") },
 	{ WIDE("interrupt"),	kint,		WIDE("split current entry into new entry")},
-	{ WIDE("mark-interrupt"), kmarkint,	WIDE("start interrupt timer for current entry")}
 };
 
 typedef struct tkey {
@@ -679,7 +677,7 @@ char		 rcfile[PATH_MAX + 1];
 	bind_key(WIDE("<DOWN>"),	WIDE("next"));
 	bind_key(WIDE(":"),		WIDE("execute"));
 	bind_key(WIDE("M"),		WIDE("merge"));
-	bind_key(WIDE("r"),		WIDE("mark-interrupt"));
+	bind_key(WIDE("r"),		WIDE("interrupt"));
 	bind_key(WIDE("R"),		WIDE("interrupt"));
 
 	/*
@@ -1426,6 +1424,16 @@ time_t	 duration;
 entry_t	*en;
 WCHAR	*name;
 
+	if (!itime) {
+		if (!running) {
+			drawstatus(WIDE("No running entry."));
+			return;
+		}
+
+		itime = time(NULL);
+		return;
+	}
+
 	if (!running) {
 		drawstatus(WIDE("No running entry."));
 		return;
@@ -1460,20 +1468,6 @@ WCHAR	*name;
 	save();
 
 	free(name);
-}
-
-void
-kmarkint()
-{
-	if (itime) {
-		kint();
-	} else {
-		if (!running) {
-			drawstatus(WIDE("No running entry."));
-			return;
-		}
-		itime = time(NULL);
-	}
 }
 
 void
