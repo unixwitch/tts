@@ -784,10 +784,6 @@ entry_t	*en;
 		return;
 	}
 	en = entry_new(name);
-
-	if (auto_nonbillable && STRSTR(name, auto_nonbillable))
-		en->en_flags.efl_nonbillable = 1;
-
 	entry_start(en);
 	curent = en;
 	save();
@@ -806,10 +802,6 @@ entry_t	*en;
 	}
 
 	en = entry_new(name);
-
-	if (auto_nonbillable && STRSTR(name, auto_nonbillable))
-		en->en_flags.efl_nonbillable = 1;
-
 	curent = en;
 	kedtime();
 	save();
@@ -1999,6 +1991,9 @@ entry_new(desc)
 entry_t	*en;
 	if ((en = calloc(1, sizeof(*en))) == NULL)
 		return NULL;
+
+	if (auto_nonbillable && STRSTR(desc, auto_nonbillable))
+		en->en_flags.efl_nonbillable = 1;
 
 	TAILQ_INSERT_HEAD(&entries, en, en_entries);
 
