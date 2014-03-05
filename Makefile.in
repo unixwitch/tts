@@ -13,8 +13,8 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 
-tts: ${OBJS}
-	${CC} ${CFLAGS} ${LDFLAGS} ${OBJS} -o tts ${LIBS} @CURSES_LIB@
+tts: ${OBJS} vers.o
+	${CC} ${CFLAGS} ${LDFLAGS} ${OBJS} vers.o -o tts ${LIBS} @CURSES_LIB@
 
 install:
 	${INSTALL} -d -m 0755 ${bindir}
@@ -22,6 +22,9 @@ install:
 
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
+
+vers.c: vers.c.sh configure.ac
+	sh @top_srcdir@/vers.c.sh @top_srcdir@/configure.ac
 
 clean:
 	rm -f tts *.o

@@ -136,6 +136,8 @@ int	c;
 
 #define	WSIZEOF(s)	(sizeof(s) / sizeof(WCHAR))
 
+extern char const *tts_version;
+
 static volatile sig_atomic_t doexit;
 
 static WINDOW *titwin, *statwin, *listwin;
@@ -1555,8 +1557,13 @@ size_t		nargs;
 void
 drawheader()
 {
+WCHAR	title[64];
+
+	SNPRINTF(title, WSIZEOF(title), "TTS %s - Type '?' for help",
+		 tts_version);
 	wmove(titwin, 0, 0);
-	waddstr(titwin, "TTS " PACKAGE_VERSION " - Type '?' for help");
+	waddstr(titwin, title);
+
 	if (itime > 0) {
 	WCHAR	str[128];
 	int	h, m, s;
