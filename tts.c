@@ -126,12 +126,13 @@ int	c;
 
 #define STRLEN		WPFX(len)
 #define STRCMP		WPFX(cmp)
-#define STRNCMP		WPFX(cmp)
+#define STRNCMP		WPFX(ncmp)
 #define STRCPY		WPFX(cpy)
 #define STRNCPY		WPFX(ncpy)
 #define STRSTR		WPFX(str)
 #define STRFTIME	WPFX(ftime)
 #define STRDUP		WPFX(dup)
+#define	STRTOL		WPFX(tol)
 
 #define	ISSPACE		ISX(space)
 
@@ -462,7 +463,7 @@ static int delete_advance = 1;
 static int mark_advance = 1;
 static int bill_advance = 0;
 static int bill_increment = 0;
-static char *auto_nonbillable;
+static WCHAR *auto_nonbillable;
 
 #define VTYPE_INT	1
 #define VTYPE_BOOL	2
@@ -704,8 +705,10 @@ char		 rcfile[PATH_MAX + 1];
 		if (doexit)
 			break;
 
+#ifdef USE_DARWIN_POWER
 		if (donesleep)
 			prompt_sleep();
+#endif
 
 		drawheader();
 		drawentries();
@@ -714,8 +717,10 @@ char		 rcfile[PATH_MAX + 1];
 		if (GETCH(&c) == ERR) {
 			if (doexit)
 				break;
+#ifdef USE_DARWIN_POWER
 			if (donesleep)
 				prompt_sleep();
+#endif
 			if (time(NULL) - laststatus >= 2)
 				drawstatus(WIDE(""));
 			if (time(NULL) - lastsave > 60)
@@ -1556,10 +1561,10 @@ drawheader()
 {
 WCHAR	title[64];
 
-	SNPRINTF(title, WSIZEOF(title), "TTS %s - Type '?' for help",
+	SNPRINTF(title, WSIZEOF(title), WIDE("TTS %s - Type '?' for help"),
 		 tts_version);
 	wmove(titwin, 0, 0);
-	waddstr(titwin, title);
+	WADDSTR(titwin, title);
 
 	if (itime > 0) {
 	WCHAR	str[128];
@@ -2630,11 +2635,11 @@ int		 val;
 		break;
 
 	case VTYPE_STRING:
-		*(char **)var->va_addr = STRDUP(argv[2]);
+		*(WCHAR **)var->va_addr = STRDUP(argv[2]);
 		break;
 
 	case VTYPE_INT:
-		*(int *)var->va_addr = atoi(argv[2]);
+		*(int *)var->va_addr = STRTOL(argv[2], NULL, 0);
 		break;
 	}
 }
