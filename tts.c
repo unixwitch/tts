@@ -1317,11 +1317,9 @@ int	 h, m, s = 0;
 	TAILQ_FOREACH_SAFE(en, &entries, en_entries, ten) {
 		if (!en->en_flags.efl_marked || en == curent)
 			continue;
-		curent->en_secs += en->en_secs;
-		if (en->en_started) {
+		if (en->en_started)
 			entry_stop(en);
-			curent->en_secs += time(NULL) - en->en_started;
-		}
+		curent->en_secs += en->en_secs;
 		TAILQ_REMOVE(&entries, en, en_entries);
 		entry_free(en);
 	}
