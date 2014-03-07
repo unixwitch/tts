@@ -27,14 +27,14 @@ cursadvance()
 entry_t	*en;
 
 	if (!curent) {
-		curent = TAILQ_FIRST(&entries);
+		curent = TTS_TAILQ_FIRST(&entries);
 		return;
 	}
 
 	/*
 	 * Try to find the next suitable entry to move the cursor to.
 	 */
-	for (en = TAILQ_NEXT(curent, en_entries); en; en = TAILQ_NEXT(en, en_entries)) {
+	for (en = TTS_TAILQ_NEXT(curent, en_entries); en; en = TTS_TAILQ_NEXT(en, en_entries)) {
 		if (!showinv && en->en_flags.efl_invoiced)
 			continue;
 		curent = en;
@@ -50,8 +50,8 @@ entry_t	*en;
 	if (showinv || !curent->en_flags.efl_invoiced)
 		return;
 
-	for (en = TAILQ_PREV(curent, entrylist, en_entries); en;
-	     en = TAILQ_PREV(en, entrylist, en_entries)) {
+	for (en = TTS_TAILQ_PREV(curent, entrylist, en_entries); en;
+	     en = TTS_TAILQ_PREV(en, entrylist, en_entries)) {
 		if (!showinv && en->en_flags.efl_invoiced)
 			continue;
 		curent = en;
@@ -251,16 +251,16 @@ histent_t	*histpos = NULL;
 
 		case KEY_UP:
 			if (histpos == NULL) {
-				if ((histpos = TAILQ_LAST(&hist->hi_ents, hentlist)) == NULL) {
+				if ((histpos = TTS_TAILQ_LAST(&hist->hi_ents, hentlist)) == NULL) {
 					beep();
 					break;
 				}
 			} else {
-				if (TAILQ_PREV(histpos, hentlist, he_entries) == NULL) {
+				if (TTS_TAILQ_PREV(histpos, hentlist, he_entries) == NULL) {
 					beep();
 					break;
 				} else
-					histpos = TAILQ_PREV(histpos, hentlist, he_entries);
+					histpos = TTS_TAILQ_PREV(histpos, hentlist, he_entries);
 			}
 
 
@@ -274,11 +274,11 @@ histent_t	*histpos = NULL;
 				break;
 			}
 
-			if (TAILQ_NEXT(histpos, he_entries) == NULL) {
+			if (TTS_TAILQ_NEXT(histpos, he_entries) == NULL) {
 				beep();
 				break;
 			} else
-				histpos = TAILQ_NEXT(histpos, he_entries);
+				histpos = TTS_TAILQ_NEXT(histpos, he_entries);
 
 
 			STRNCPY(input, histpos->he_text, WSIZEOF(input) - 1);

@@ -36,6 +36,9 @@
 # include	<mach/mach_port.h>
 # include	<mach/mach_interface.h>
 # include	<mach/mach_init.h>
+# include	<mach/mach_error.h>
+
+# include	<sys/event.h>
 
 # include	<IOKit/pwr_mgt/IOPMLib.h>
 # include	<IOKit/IOMessage.h>
@@ -43,7 +46,7 @@
 # include	<pthread.h>
 #endif
 
-#include	"queue.h"
+#include	"tailq.h"
 #include	"tts.h"
 #include	"entry.h"
 #include	"wide.h"
@@ -223,9 +226,12 @@ static void *
 power_thread_run(arg)
 	void	*arg;
 {
+struct kevent		ev, rev;
+int			kq;
 sigset_t		ss;
 IONotificationPortRef	port_ref;
 io_object_t		notifier;
+mach_port_t		ioport;
 
 /* Block SIGUSR1 so it's always delivered to the main thread, not us */
 	sigemptyset(&ss);
@@ -235,10 +241,48 @@ io_object_t		notifier;
 /* Register a handler for sleep and wake events */
 	root_port = IORegisterForSystemPower(NULL, &port_ref, power_event,
 			&notifier);
-	CFRunLoopAddSource(CFRunLoopGetCurrent(),
-		IONotificationPortGetRunLoopSource(port_ref),
-		kCFRunLoopCommonModes);
-	CFRunLoopRun();
+	ioport = IONotificationPortGetMachPort(port_ref);
+	EV_SET(&ev, ioport, EVFILT_MACHPORT, EV_ADD, 0, 0, 0);
+
+/* Create our queue */
+	if ((kq = kqueue()) == -1) {
+		perror("kqueue");
+		exit(1);
+	}
+
+	for (;;) {
+	int	nev;
+
+	struct {
+		mach_msg_header_t	hdr;
+		char			data[8192];
+		mach_msg_trailer_t	trailer;
+	} msg;
+	mach_msg_return_t ret;
+
+	/* Wait for an event */
+		if ((nev = kevent(kq, &ev, 1, &rev, 1, NULL)) == -1) {
+			perror("kevent");
+			exit(1);
+		}
+
+		if (nev == 0)
+			continue;
+
+	/* Receive the message */
+		memset(&msg, 0, sizeof(ret));
+		ret = mach_msg(&msg.hdr, MACH_RCV_MSG, 0, sizeof(msg), ioport,
+			       MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+
+		if (ret != MACH_MSG_SUCCESS) {
+			fprintf(stderr, "mach_msg: %s [%x]\n",
+				mach_error_string(ret), ret);
+			exit(1);
+		}
+
+	/* Give the message to IOKit to handle */
+		IODispatchCalloutFromMessage(NULL, &msg.hdr, port_ref);
+	}
 
 	/*NOTREACHED*/
 	return NULL;
@@ -400,10 +444,10 @@ char		 rcfile[PATH_MAX + 1];
 	drawheader();
 	drawstatus(WIDE(""));
 
-	if (!TAILQ_EMPTY(&entries)) {
-		curent = TAILQ_FIRST(&entries);
+	if (!TTS_TAILQ_EMPTY(&entries)) {
+		curent = TTS_TAILQ_FIRST(&entries);
 		while (!showinv && curent->en_flags.efl_invoiced)
-			if ((curent = TAILQ_NEXT(curent, en_entries)) == NULL)
+			if ((curent = TTS_TAILQ_NEXT(curent, en_entries)) == NULL)
 				break;
 	}
 
@@ -444,7 +488,7 @@ char		 rcfile[PATH_MAX + 1];
 
 		drawstatus(WIDE(""));
 
-		TAILQ_FOREACH(bi, &bindings, bi_entries) {
+		TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
 			if (bi->bi_code != c)
 				continue;
 			bi->bi_func->fn_hdl();
@@ -471,15 +515,15 @@ chtype	 oldbg;
 
 	getmaxyx(listwin, nlines, i);
 
-	TAILQ_FOREACH(en, &entries, en_entries)
+	TTS_TAILQ_FOREACH(en, &entries, en_entries)
 		en->en_flags.efl_visible = 0;
 
-	en = TAILQ_FIRST(&entries);
+	en = TTS_TAILQ_FIRST(&entries);
 	for (i = 0; i < pagestart; i++)
-		if ((en = TAILQ_NEXT(en, en_entries)) == NULL)
+		if ((en = TTS_TAILQ_NEXT(en, en_entries)) == NULL)
 			return;
 
-	for (; en; en = TAILQ_NEXT(en, en_entries)) {
+	for (; en; en = TTS_TAILQ_NEXT(en, en_entries)) {
 	time_t	 n;
 	int	 h, s, m;
 	WCHAR	 flags[10], stime[16], *p;
@@ -660,7 +704,7 @@ char	 input[4096];
 WCHAR	 line[4096];
 entry_t	*en;
 
-	TAILQ_FOREACH(en, &entries, en_entries)
+	TTS_TAILQ_FOREACH(en, &entries, en_entries)
 		entry_free(en);
 
 	if ((f = fopen(statfile, "r")) == NULL) {
@@ -779,7 +823,7 @@ entry_t	*en;
 		exit(1);
 	}
 
-	TAILQ_FOREACH_REVERSE(en, &entries, entrylist, en_entries) {
+	TTS_TAILQ_FOREACH_REVERSE(en, &entries, entrylist, en_entries) {
 	char	 flags[10], *fp = flags, wdesc[4096] = {};
 	time_t	 n;
 
@@ -884,7 +928,7 @@ hist_new()
 history_t	*hi;
 	if ((hi = calloc(1, sizeof(*hi))) == NULL)
 		return NULL;
-	TAILQ_INIT(&hi->hi_ents);
+	TTS_TAILQ_INIT(&hi->hi_ents);
 	return hi;
 }
 
@@ -905,10 +949,10 @@ histent_t	*hent;
 		return;
 	}
 
-	TAILQ_INSERT_TAIL(&hi->hi_ents, hent, he_entries);
+	TTS_TAILQ_INSERT_TAIL(&hi->hi_ents, hent, he_entries);
 
 	if (hi->hi_nents == 50)
-		TAILQ_REMOVE(&hi->hi_ents, TAILQ_FIRST(&hi->hi_ents), he_entries);
+		TTS_TAILQ_REMOVE(&hi->hi_ents, TTS_TAILQ_FIRST(&hi->hi_ents), he_entries);
 	else
 		++hi->hi_nents;
 }
@@ -976,7 +1020,7 @@ INT		 code;
 	}
 
 	/* Do we already have a binding for this key? */
-	TAILQ_FOREACH(binding, &bindings, bi_entries) {
+	TTS_TAILQ_FOREACH(binding, &bindings, bi_entries) {
 		if (binding->bi_code == code) {
 			binding->bi_func = func;
 			return;
@@ -990,7 +1034,7 @@ INT		 code;
 	binding->bi_key = key;
 	binding->bi_func = func;
 	binding->bi_code = code;
-	TAILQ_INSERT_TAIL(&bindings, binding, bi_entries);
+	TTS_TAILQ_INSERT_TAIL(&bindings, binding, bi_entries);
 }
 
 variable_t *

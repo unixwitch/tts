@@ -14,7 +14,7 @@
 #include	<signal.h>
 
 #include	"wide.h"
-#include	"queue.h"
+#include	"tailq.h"
 #include	"entry.h"
 
 extern char const *tts_version;
@@ -50,9 +50,9 @@ int save(void);
 #define NHIST 50
 typedef struct histent {
 	WCHAR			*he_text;
-	TAILQ_ENTRY(histent)	 he_entries;
+	TTS_TAILQ_ENTRY(histent)	 he_entries;
 } histent_t;
-typedef TAILQ_HEAD(hentlist, histent) hentlist_t;
+typedef TTS_TAILQ_HEAD(hentlist, histent) hentlist_t;
 
 typedef struct history {
 	int		hi_nents;

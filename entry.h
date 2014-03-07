@@ -13,7 +13,7 @@
 
 #include	<time.h>
 
-#include	"queue.h"
+#include	"tailq.h"
 #include	"wide.h"
 
 typedef struct entry {
@@ -29,10 +29,10 @@ typedef struct entry {
 		int	efl_deleted:1;
 		int	efl_nonbillable:1;
 	}			 en_flags;
-	TAILQ_ENTRY(entry)	 en_entries;
+	TTS_TAILQ_ENTRY(entry)	 en_entries;
 } entry_t;
 
-typedef TAILQ_HEAD(entrylist, entry) entry_list;
+typedef TTS_TAILQ_HEAD(entrylist, entry) entry_list;
 extern entry_list entries;
 
 extern entry_t *running;

@@ -17,7 +17,7 @@
 #include	"wide.h"
 #include	"tts.h"
 
-entry_list entries = TAILQ_HEAD_INITIALIZER(entries);
+entry_list entries = TTS_TAILQ_HEAD_INITIALIZER(entries);
 
 entry_t *running;
 
@@ -32,7 +32,7 @@ entry_t	*en;
 	if (auto_nonbillable && STRSTR(desc, auto_nonbillable))
 		en->en_flags.efl_nonbillable = 1;
 
-	TAILQ_INSERT_HEAD(&entries, en, en_entries);
+	TTS_TAILQ_INSERT_HEAD(&entries, en, en_entries);
 
 	en->en_desc = STRDUP(desc);
 	time(&en->en_created);
@@ -93,7 +93,7 @@ time_t	 day = time_day(when);
 time_t	 sum = 0;
 entry_t	*en;
 int	 rnd = incr * 60;
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 	time_t	n;
 
 		if (entry_day(en) > day)

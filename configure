@@ -4243,7 +4243,7 @@ fi
 
 
 oLDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -framework CoreFoundation -framework IOKit"
+LDFLAGS="$LDFLAGS -framework IOKit"
 for ac_func in IORegisterForSystemPower
 do :
   ac_fn_c_check_func "$LINENO" "IORegisterForSystemPower" "ac_cv_func_IORegisterForSystemPower"

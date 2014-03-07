@@ -17,7 +17,7 @@ AC_CHECK_HEADERS([IOKit/pwr_mgt/IOPMLib.h])
 AC_CHECK_LIB(m, round)
 
 oLDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -framework CoreFoundation -framework IOKit"
+LDFLAGS="$LDFLAGS -framework IOKit"
 AC_CHECK_FUNCS([IORegisterForSystemPower], [], [LDFLAGS="$oLDFLAGS"])
 
 AC_CONFIG_FILES([Makefile])

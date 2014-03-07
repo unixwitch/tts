@@ -10,4 +10,4 @@
 
 #include	"bindings.h"
 
-binding_list_t bindings = TAILQ_HEAD_INITIALIZER(bindings);
+binding_list_t bindings = TTS_TAILQ_HEAD_INITIALIZER(bindings);

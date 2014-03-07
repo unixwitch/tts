@@ -53,7 +53,7 @@ kquit()
 entry_t	*en;
 int	 ndel = 0;
 
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 		if (en->en_flags.efl_deleted)
 			ndel++;
 	}
@@ -140,7 +140,7 @@ kmarkdel()
 entry_t	*en;
 int	 nmarked = 0;
 
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 		if (en->en_flags.efl_marked) {
 			nmarked++;
 			en->en_flags.efl_deleted = 1;
@@ -166,17 +166,17 @@ ksync()
 {
 entry_t	*en, *ten;
 
-	TAILQ_FOREACH_SAFE(en, &entries, en_entries, ten) {
+	TTS_TAILQ_FOREACH_SAFE(en, &entries, en_entries, ten) {
 		if (!en->en_flags.efl_deleted)
 			continue;
 		if (en == curent)
 			curent = NULL;
-		TAILQ_REMOVE(&entries, en, en_entries);
+		TTS_TAILQ_REMOVE(&entries, en, en_entries);
 		entry_free(en);
 	}
 
 	if (curent == NULL)
-		curent = TAILQ_FIRST(&entries);
+		curent = TTS_TAILQ_FIRST(&entries);
 	save();
 }
 
@@ -188,7 +188,7 @@ entry_t	*prev = curent;
 		return;
 
 	do {
-		if ((prev = TAILQ_PREV(prev, entrylist, en_entries)) == NULL)
+		if ((prev = TTS_TAILQ_PREV(prev, entrylist, en_entries)) == NULL)
 			break;
 	} while (!showinv && prev->en_flags.efl_invoiced);
 
@@ -210,7 +210,7 @@ entry_t	*next = curent;
 		return;
 
 	do {
-		if ((next = TAILQ_NEXT(next, en_entries)) == NULL)
+		if ((next = TTS_TAILQ_NEXT(next, en_entries)) == NULL)
 			break;
 	} while (!showinv && next->en_flags.efl_invoiced);
 
@@ -230,7 +230,7 @@ kinvoiced()
 entry_t	*en;
 int	 anymarked = 0;
 
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 		if (!en->en_flags.efl_marked)
 			continue;
 		anymarked = 1;
@@ -254,8 +254,8 @@ int	 anymarked = 0;
 	en = curent;
 
 	if (showinv) {
-		if (TAILQ_NEXT(curent, en_entries) != NULL)
-			curent = TAILQ_NEXT(curent, en_entries);
+		if (TTS_TAILQ_NEXT(curent, en_entries) != NULL)
+			curent = TTS_TAILQ_NEXT(curent, en_entries);
 		return;
 	}
 
@@ -263,7 +263,7 @@ int	 anymarked = 0;
 	 * Try to find the next uninvoiced request to move the cursor to.
 	 */
 	for (;;) {
-		if ((curent = TAILQ_NEXT(curent, en_entries)) == NULL)
+		if ((curent = TTS_TAILQ_NEXT(curent, en_entries)) == NULL)
 			break;	/* end of list */
 		if (!curent->en_flags.efl_invoiced)
 			return;
@@ -273,7 +273,7 @@ int	 anymarked = 0;
 	 * We didn't find any, so try searching backwards instead.
 	 */
 	for (curent = en;;) {
-		if ((curent = TAILQ_PREV(curent, entrylist, en_entries)) == NULL)
+		if ((curent = TTS_TAILQ_PREV(curent, entrylist, en_entries)) == NULL)
 			break;	/* end of list */
 		if (!curent->en_flags.efl_invoiced)
 			return;
@@ -286,7 +286,7 @@ kbillable()
 entry_t	*en;
 int	 anymarked = 0;
 
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 		if (!en->en_flags.efl_marked)
 			continue;
 		anymarked = 1;
@@ -378,7 +378,7 @@ entry_t	*en = curent;
 		return;
 
 	if (!curent) {
-		curent = TAILQ_FIRST(&entries);
+		curent = TTS_TAILQ_FIRST(&entries);
 		return;
 	}
 
@@ -386,7 +386,7 @@ entry_t	*en = curent;
 	 * Try to find the next uninvoiced request to move the cursor to.
 	 */
 	for (;;) {
-		if ((curent = TAILQ_NEXT(curent, en_entries)) == NULL)
+		if ((curent = TTS_TAILQ_NEXT(curent, en_entries)) == NULL)
 			break;	/* end of list */
 		if (!curent->en_flags.efl_invoiced)
 			return;
@@ -396,7 +396,7 @@ entry_t	*en = curent;
 	 * We didn't find any, so try searching backwards instead.
 	 */
 	for (curent = en;;) {
-		if ((curent = TAILQ_PREV(curent, entrylist, en_entries)) == NULL)
+		if ((curent = TTS_TAILQ_PREV(curent, entrylist, en_entries)) == NULL)
 			break;	/* end of list */
 		if (!curent->en_flags.efl_invoiced)
 			return;
@@ -537,7 +537,7 @@ int	 h, m, s = 0;
 	/*
 	 * Count number of marked entries and the summed time.
 	 */
-	TAILQ_FOREACH(en, &entries, en_entries) {
+	TTS_TAILQ_FOREACH(en, &entries, en_entries) {
 		if (!en->en_flags.efl_marked || en == curent)
 			continue;
 		nmarked++;
@@ -561,13 +561,13 @@ int	 h, m, s = 0;
 	if (!yesno(pr))
 		return;
 
-	TAILQ_FOREACH_SAFE(en, &entries, en_entries, ten) {
+	TTS_TAILQ_FOREACH_SAFE(en, &entries, en_entries, ten) {
 		if (!en->en_flags.efl_marked || en == curent)
 			continue;
 		if (en->en_started)
 			entry_stop(en);
 		curent->en_secs += en->en_secs;
-		TAILQ_REMOVE(&entries, en, en_entries);
+		TTS_TAILQ_REMOVE(&entries, en, en_entries);
 		entry_free(en);
 	}
 	save();
@@ -586,12 +586,12 @@ INT		 c;
 binding_t	*bi;
 
 	/* Count the number of bindings */
-	TAILQ_FOREACH(bi, &bindings, bi_entries)
+	TTS_TAILQ_FOREACH(bi, &bindings, bi_entries)
 		nhelp++;
 	help = calloc(nhelp, sizeof(const WCHAR *));
 
 	i = 0;
-	TAILQ_FOREACH(bi, &bindings, bi_entries) {
+	TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
 	WCHAR	s[128];
 		if (bi->bi_key)
 			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s %"FMT_L"s (%"FMT_L"s)"),
@@ -660,7 +660,7 @@ void
 kunmarkall()
 {
 entry_t	*en;
-	TAILQ_FOREACH(en, &entries, en_entries)
+	TTS_TAILQ_FOREACH(en, &entries, en_entries)
 		en->en_flags.efl_marked = 0;
 }
 
@@ -746,10 +746,10 @@ entry_t		*start, *cur;
 	cur = start = curent;
 
 	for (;;) {
-		cur = TAILQ_NEXT(cur, en_entries);
+		cur = TTS_TAILQ_NEXT(cur, en_entries);
 		if (cur == NULL) {
 			drawstatus(WIDE("Search reached last entry, continuing from top."));
-			cur = TAILQ_FIRST(&entries);
+			cur = TTS_TAILQ_FIRST(&entries);
 		}
 
 		if (cur == start) {

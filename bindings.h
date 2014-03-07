@@ -13,7 +13,7 @@
 
 #include	"wide.h"
 #include	"functions.h"
-#include	"queue.h"
+#include	"tailq.h"
 
 typedef struct tkey {
 	INT		 ky_code;
@@ -21,13 +21,14 @@ typedef struct tkey {
 } tkey_t;
 
 typedef struct binding {
-	INT			 bi_code;
-	tkey_t			*bi_key;
-	function_t		*bi_func;
-	TAILQ_ENTRY(binding)	 bi_entries;
+	INT		 bi_code;
+	tkey_t		*bi_key;
+	function_t	*bi_func;
+
+	TTS_TAILQ_ENTRY(binding) bi_entries;
 } binding_t;
 
-typedef TAILQ_HEAD(bindlist, binding) binding_list_t;
+typedef TTS_TAILQ_HEAD(bindlist, binding) binding_list_t;
 extern binding_list_t bindings;
 
 tkey_t *find_key(const WCHAR *name);
