@@ -467,8 +467,7 @@ struct kevent64_s	 evs[2], rev;
 		timeout.tv_sec = 0;
 		timeout.tv_nsec = 500000000;
 
-		if ((nev = kevent64(kq, NULL, 0, &rev, 1, 0,
-				  running ? &timeout : NULL)) == -1) {
+		if ((nev = kevent64(kq, NULL, 0, &rev, 1, 0, &timeout)) == -1) {
 			if (doexit)
 				break;
 			if (errno == EINTR)
@@ -476,9 +475,6 @@ struct kevent64_s	 evs[2], rev;
 			perror("kevent");
 			return 1;
 		}
-
-		if (nev == 0)
-			continue;
 
 		if (rev.filter == EVFILT_MACHPORT) {
 			power_handle(&rev);
@@ -492,20 +488,12 @@ struct kevent64_s	 evs[2], rev;
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 500000;
 
-	/*
-	 * If there's a running entry, wake up in 0.5 seconds time to update
-	 * the display.  Otherwise, we can sleep forever.
-	 */
-		if (select(STDIN_FILENO + 1, &in_set, NULL, NULL,
-		       running ? &timeout : NULL) == -1) {
+		if (select(STDIN_FILENO + 1, &in_set, NULL, NULL, &timeout) == -1) {
 			if (doexit)
 				break;
 			if (errno == EINTR)
 				continue;
 		}
-
-		if (!FD_ISSET(STDIN_FILENO, &in_set))
-			continue;
 #endif
 
 		while (GETCH(&c) != ERR) {
@@ -529,8 +517,10 @@ struct kevent64_s	 evs[2], rev;
 
 		if (doexit)
 			break;
+
 		if (time(NULL) - laststatus >= 2)
 			drawstatus(WIDE(""));
+
 		if (time(NULL) - lastsave > 60)
 			save();
 	}
