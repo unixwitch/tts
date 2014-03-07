@@ -208,14 +208,14 @@ static io_connect_t		root_port;
 static volatile sig_atomic_t	donesleep;
 static time_t			sleeptime;
 
-static void  power_setup(struct kevent64_s *);
-static void  power_handle(struct kevent64_s *);
+static void  power_setup(struct kevent *);
+static void  power_handle(struct kevent *);
 static void  power_event(void *, io_service_t, natural_t, void *);
 static void  prompt_sleep(void);
 
 static void
 power_setup(ev)
-	struct kevent64_s	*ev;
+	struct kevent	*ev;
 {
 mach_port_t	pset;
 int		ret;
@@ -232,7 +232,7 @@ int		ret;
 	root_port = IORegisterForSystemPower(NULL, &port_ref, power_event,
 			&notifier);
 	ioport = IONotificationPortGetMachPort(port_ref);
-	EV_SET64(ev, pset, EVFILT_MACHPORT, EV_ADD, 0, 0, 0, 0, 0);
+	EV_SET(ev, pset, EVFILT_MACHPORT, EV_ADD, 0, 0, 0);
 
 	if ((ret = mach_port_insert_member(mach_task_self(), ioport,
 					   pset)) != KERN_SUCCESS) {
@@ -244,7 +244,7 @@ int		ret;
 
 static void
 power_handle(ev)
-	struct kevent64_s	*ev;
+	struct kevent	*ev;
 {
 mach_msg_return_t	 ret;
 void			*msg = alloca(ev->data);
@@ -303,11 +303,11 @@ int
 main(argc, argv)
 	char	**argv;
 {
-struct passwd		*pw;
-char			 rcfile[PATH_MAX + 1];
+struct passwd	*pw;
+char		 rcfile[PATH_MAX + 1];
 #ifdef	USE_DARWIN_POWER
-int			 kq;
-struct kevent64_s	 evs[2], rev;
+int		 kq;
+struct kevent	 evs[2], rev;
 # define	STDIN_EV	0
 # define	IOKIT_EV	1
 #endif
@@ -322,10 +322,10 @@ struct kevent64_s	 evs[2], rev;
 
 	memset(evs, 0, sizeof(evs));
 
-	EV_SET64(&evs[STDIN_EV], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0, 0, 0);
+	EV_SET(&evs[STDIN_EV], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0);
 	power_setup(&evs[IOKIT_EV]);
 
-	if (kevent64(kq, evs, 2, NULL, 0, 0, NULL) == -1) {
+	if (kevent(kq, evs, 2, NULL, 0, NULL) == -1) {
 		perror("kevent");
 		return 1;
 	}
@@ -467,7 +467,7 @@ struct kevent64_s	 evs[2], rev;
 		timeout.tv_sec = 0;
 		timeout.tv_nsec = 500000000;
 
-		if ((nev = kevent64(kq, NULL, 0, &rev, 1, 0, &timeout)) == -1) {
+		if ((nev = kevent(kq, NULL, 0, &rev, 1, &timeout)) == -1) {
 			if (doexit)
 				break;
 			if (errno == EINTR)
@@ -476,7 +476,7 @@ struct kevent64_s	 evs[2], rev;
 			return 1;
 		}
 
-		if (rev.filter == EVFILT_MACHPORT) {
+		if (nev == 1 && (rev.filter == EVFILT_MACHPORT)) {
 			power_handle(&rev);
 			continue;
 		}
