@@ -12,6 +12,7 @@
 #define	TTS_STYLE_H
 
 #include	"tts_curses.h"
+#include	"wide.h"
 
 typedef struct style {
 	short	sy_pair;
@@ -37,6 +38,8 @@ extern style_t	sy_header,
 		sy_running,
 		sy_selected,
 		sy_date;
+
+extern short default_fg, default_bg;
 
 int attr_find(const WCHAR *name, attr_t *result);
 int colour_find(const WCHAR *name, short *result);

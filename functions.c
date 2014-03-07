@@ -804,3 +804,18 @@ size_t		nargs;
 	tokfree(&args);
 }
 
+/*
+ * Return the function_t for the function called .name, or NULL if such a
+ * function doesn't exist.
+ */
+function_t *
+find_func(name)
+	const WCHAR	*name;
+{
+function_t	*f;
+	for (f = funcs; f->fn_name; f++)
+		if (STRCMP(name, f->fn_name) == 0)
+			return f;
+	return NULL;
+}
+

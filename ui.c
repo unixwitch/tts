@@ -9,6 +9,7 @@
  */
 
 #include	<string.h>
+#include	<stdlib.h>
 
 #include	"ui.h"
 #include	"tts.h"
@@ -313,5 +314,296 @@ end:	;
 	wrefresh(statwin);
 	hist_add(hist, input);
 	return STRDUP(input);
+}
+
+void
+errbox(const WCHAR *msg, ...)
+{
+va_list	ap;
+	va_start(ap, msg);
+	verrbox(msg, ap);
+	va_end(ap);
+}
+
+void
+verrbox(msg, ap)
+	const WCHAR	*msg;
+	va_list		 ap;
+{
+WCHAR	 text[4096];
+WINDOW	*ewin;
+
+#define ETITLE	WIDE(" Error ")
+#define ECONT	WIDE(" <OK> ")
+int	width;
+INT	c;
+
+	VSNPRINTF(text, WSIZEOF(text), msg, ap);
+	width = STRLEN(text);
+
+	ewin = newwin(6, width + 4,
+			(LINES / 2) - ((1 + 2)/ 2),
+			(COLS / 2) - ((width + 2) / 2));
+	leaveok(ewin, TRUE);
+	wborder(ewin, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	wattron(ewin, A_REVERSE | A_BOLD);
+	wmove(ewin, 0, (width / 2) - (WSIZEOF(ETITLE) - 1)/2);
+	WADDSTR(ewin, ETITLE);
+	wattroff(ewin, A_REVERSE | A_BOLD);
+
+	wmove(ewin, 2, 2);
+	WADDSTR(ewin, text);
+	wattron(ewin, A_REVERSE | A_BOLD);
+	wmove(ewin, 4, (width / 2) - ((WSIZEOF(ECONT) - 1) / 2));
+	WADDSTR(ewin, ECONT);
+	wattroff(ewin, A_REVERSE | A_BOLD);
+
+	for (;;) {
+		if (WGETCH(ewin, &c) == ERR)
+			continue;
+		if (c == '\r')
+			break;
+	}
+
+	delwin(ewin);
+}
+
+void
+drawentries()
+{
+int	 i, nlines;
+int	 cline = 0;
+time_t	 lastday = 0;
+entry_t	*en;
+chtype	 oldbg;
+
+	getmaxyx(listwin, nlines, i);
+
+	TTS_TAILQ_FOREACH(en, &entries, en_entries)
+		en->en_flags.efl_visible = 0;
+
+	en = TTS_TAILQ_FIRST(&entries);
+	for (i = 0; i < pagestart; i++)
+		if ((en = TTS_TAILQ_NEXT(en, en_entries)) == NULL)
+			return;
+
+	for (; en; en = TTS_TAILQ_NEXT(en, en_entries)) {
+	time_t	 n;
+	int	 h, s, m;
+	WCHAR	 flags[10], stime[16], *p;
+	attr_t	 attrs = WA_NORMAL;
+
+		if (!showinv && en->en_flags.efl_invoiced)
+			continue;
+
+		oldbg = getbkgd(listwin);
+
+		if (lastday != entry_day(en)) {
+		struct tm	*lt;
+		WCHAR		 lbl[128];
+		time_t		 itime = entry_time_for_day(entry_day(en), 1, 0),
+				 ntime = entry_time_for_day(entry_day(en), 0, 0),
+				 btime = entry_time_for_day(entry_day(en), 2, bill_increment);
+		int		 hi, mi, si,
+				 hn, mn, sn,
+				 hb, mb, sb,
+				 ht, mt, st;
+		WCHAR		 hdrtext[256];
+
+			time_to_hms(itime, hi, mi, si);
+			time_to_hms(ntime, hn, mn, sn);
+			time_to_hms(btime, hb, mb, sb);
+			time_to_hms(itime + ntime, ht, mt, st);
+
+			oldbg = getbkgd(listwin);
+			wbkgdset(listwin, style_bg(sy_entry));
+			wattr_on(listwin, style_fg(sy_entry), NULL);
+
+			wmove(listwin, cline, 0);
+			wclrtoeol(listwin);
+
+			wbkgdset(listwin, oldbg);
+			wattr_off(listwin, style_fg(sy_entry), NULL);
+
+			if (++cline >= nlines)
+				break;
+
+			lastday = entry_day(en);
+			lt = localtime(&lastday);
+
+			STRFTIME(lbl, WSIZEOF(lbl), WIDE("%A, %d %B %Y"), lt);
+			if (show_billable)
+				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
+					 WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
+					"N:%02d:%02d:%02d / T:%02d:%02d:%02d / "
+					"B:%02d:%02d:%02d]"),
+					lbl, hi, mi, si, hn, mn, sn, ht, mt, st,
+					hb, mb, sb);
+			else
+				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
+					WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
+					"N:%02d:%02d:%02d / T:%02d:%02d:%02d]"),
+					lbl, hi, mi, si, hn, mn, sn, ht, mt, st);
+
+			wattr_on(listwin, style_fg(sy_date), NULL);
+			wbkgdset(listwin, style_bg(sy_date));
+			wmove(listwin, cline, 0);
+			WADDSTR(listwin, hdrtext);
+			wclrtoeol(listwin);
+			wattr_off(listwin, style_fg(sy_date), NULL);
+			wbkgdset(listwin, oldbg);
+
+			if (++cline >= nlines) {
+				wbkgdset(listwin, oldbg);
+				wattr_off(listwin, style_fg(sy_date), NULL);
+				break;
+			}
+
+			oldbg = getbkgd(listwin);
+			wbkgdset(listwin, style_bg(sy_entry));
+			wattr_on(listwin, style_fg(sy_entry), NULL);
+
+			wmove(listwin, cline, 0);
+			wclrtoeol(listwin);
+
+			wbkgdset(listwin, oldbg);
+			wattr_off(listwin, style_fg(sy_entry), NULL);
+
+			if (++cline >= nlines)
+				break;
+		}
+
+		en->en_flags.efl_visible = 1;
+		wmove(listwin, cline, 0);
+
+		attrs = style_fg(sy_entry);
+
+		if (en->en_started && en == curent)
+			attrs = style_fg(sy_selected) |
+				(style_fg(sy_running) & (
+					WA_STANDOUT | WA_UNDERLINE |
+					WA_REVERSE | WA_BLINK | WA_DIM |
+					WA_BOLD));
+		else if (en->en_started)
+			attrs = style_fg(sy_running);
+		else if (en == curent)
+			attrs = style_fg(sy_selected);
+
+		wbkgdset(listwin, ' ' | (attrs & ~WA_UNDERLINE));
+		wattr_on(listwin, attrs, NULL);
+
+		if (en == curent) {
+			WADDSTR(listwin, WIDE("  -> "));
+		} else
+			WADDSTR(listwin, WIDE("     "));
+
+		n = en->en_secs;
+		if (en->en_started)
+			n += time(NULL) - en->en_started;
+		h = n / (60 * 60);
+		n %= (60 * 60);
+		m = n / 60;
+		n %= 60;
+		s = n;
+
+		SNPRINTF(stime, WSIZEOF(stime), WIDE("%02d:%02d:%02d%c "),
+			h, m, s, (itime && (en == running)) ? '*' : ' ');
+		WADDSTR(listwin, stime);
+
+		memset(flags, 0, sizeof(flags));
+		p = flags;
+
+		if (en->en_flags.efl_marked)
+			*p++ = 'M';
+		else
+			*p++ = ' ';
+
+		if (en->en_flags.efl_invoiced)
+			*p++ = 'I';
+		else
+			*p++ = ' ';
+
+		if (!en->en_flags.efl_nonbillable)
+			*p++ = 'B';
+		else
+			*p++ = ' ';
+
+		if (en->en_flags.efl_deleted)
+			*p++ = 'D';
+		else
+			*p++ = ' ';
+
+		if (*flags) {
+		WCHAR	s[10];
+			SNPRINTF(s, WSIZEOF(s), WIDE("%-5"FMT_L"s  "), flags);
+			WADDSTR(listwin, s);
+		} else
+			WADDSTR(listwin, WIDE("       "));
+
+		WADDSTR(listwin, en->en_desc);
+		wclrtoeol(listwin);
+		wbkgdset(listwin, oldbg);
+		wattr_off(listwin, attrs, NULL);
+
+		if (++cline >= nlines)
+			return;
+	}
+
+	oldbg = getbkgd(listwin);
+	wattr_on(listwin, style_fg(sy_entry), NULL);
+	wbkgdset(listwin, style_bg(sy_entry));
+	for (; cline < nlines; cline++) {
+		wmove(listwin, cline, 0);
+		wclrtoeol(listwin);
+	}
+	wattr_off(listwin, style_fg(sy_entry), NULL);
+	wbkgdset(listwin, oldbg);
+}
+
+int
+prduration(pr, hh, mm, ss)
+	WCHAR	*pr;
+	int	*hh, *mm, *ss;
+{
+WCHAR	*tstr;
+int	 h, m, s;
+	if ((tstr = prompt(pr, WIDE("00:00:00"), NULL)) == NULL)
+		return -1;
+
+	if (!*tstr) {
+		drawstatus(WIDE("No duration entered"));
+		free(tstr);
+		return -1;
+	}
+
+	if (SSCANF(tstr, WIDE("%d:%d:%d"), &h, &m, &s) != 3) {
+		h = 0;
+		if (SSCANF(tstr, WIDE("%d:%d"), &m, &s) != 2) {
+			m = 0;
+			if (SSCANF(tstr, WIDE("%d"), &s) != 1) {
+				free(tstr);
+				drawstatus(WIDE("Invalid time format."));
+				return -1;
+			}
+		}
+	}
+
+	free(tstr);
+
+	if (m >= 60) {
+		drawstatus(WIDE("Minutes cannot be more than 59."));
+		return -1;
+	}
+
+	if (s >= 60) {
+		drawstatus(WIDE("Seconds cannot be more than 59."));
+		return -1;
+	}
+
+	*hh = h;
+	*mm = m;
+	*ss = s;
+	return 0;
 }
 
