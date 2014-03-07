@@ -1,0 +1,7 @@
+*.swp
+*~
+/build
+/autom4te.cache
+/doconf
+/bling_import.pl.old
+/queue.h
