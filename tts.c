@@ -2484,7 +2484,7 @@ const WCHAR	*p, *q;
 	/* Copy the argument (which is sz bytes long) into the result array */
 		sz = (q - p);
 		*res = realloc(*res, sizeof(WCHAR *) * (ntoks + 1));
-		(*res)[ntoks] = malloc(sizeof(WCHAR) * sz + 1);
+		(*res)[ntoks] = malloc(sizeof(WCHAR) * (sz + 1));
 		MEMCPY((*res)[ntoks], p, sz);
 		(*res)[ntoks][sz] = 0;
 		ntoks++;
