@@ -15,6 +15,7 @@
 
 static command_t commands[] = {
 	{ WIDE("bind"),		c_bind	},
+	{ WIDE("macro"),	c_macro	},
 	{ WIDE("style"),	c_style	},
 	{ WIDE("set"),		c_set },
 	{ }
@@ -80,7 +81,20 @@ c_bind(argc, argv)
 		return;
 	}
 
-	bind_key(argv[1], argv[2]);
+	bind_key(argv[1], argv[2], 0);
+}
+
+void
+c_macro(argc, argv)
+	size_t	argc;
+	WCHAR	**argv;
+{
+	if (argc != 3) {
+		cmderr(WIDE("Usage: macro <key> <def>"));
+		return;
+	}
+
+	bind_key(argv[1], argv[2], 1);
 }
 
 void

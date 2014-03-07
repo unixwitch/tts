@@ -33,7 +33,7 @@
 
 #set bill_advance 0
 
-#### Bindings
+#### Bindings and macros
 #
 # Use the 'bind' command to (re)define keybindings.  Type '?' while TTS is
 # running for a full list of key bindings.
@@ -44,6 +44,12 @@
 # Here's one for 'vi' users:
 bind j next
 bind k prev
+
+# Macros work in a similar way to bindings, except the second argument is a
+# string which will be executed as if it was typed.  For example, the
+# following macro would add a new entry called "test", and set its timer to
+# 30 minutes.
+#macro t "atest\n+30:00\n"
 
 #### Styling
 #

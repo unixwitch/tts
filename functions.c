@@ -592,14 +592,20 @@ binding_t	*bi;
 
 	i = 0;
 	TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
-	WCHAR	s[128];
+	WCHAR	s[128], t[16];
+
 		if (bi->bi_key)
-			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s %"FMT_L"s (%"FMT_L"s)"),
-				bi->bi_key->ky_name, bi->bi_func->fn_desc,
-				bi->bi_func->fn_name);
+			SNPRINTF(t, WSIZEOF(t), WIDE("%"FMT_L"s"), bi->bi_key->ky_name);
 		else
-			SNPRINTF(s, WSIZEOF(s), WIDE("%"FMT_L"c          %"FMT_L"s (%"FMT_L"s)"),
-				bi->bi_code, bi->bi_func->fn_desc, bi->bi_func->fn_name);
+			SNPRINTF(t, WSIZEOF(t), WIDE("%"FMT_L"c"), bi->bi_code);
+
+		if (bi->bi_macro)
+			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s execute macro: %"FMT_L"s"),
+				t, bi->bi_macro);
+		else
+			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s %"FMT_L"s (%"FMT_L"s)"),
+				t, bi->bi_func->fn_desc, bi->bi_func->fn_name);
+
 		help[i] = STRDUP(s);
 		i++;
 	}

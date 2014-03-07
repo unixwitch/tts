@@ -150,6 +150,8 @@ entry_t *curent;
 
 int showinv = 0;
 
+static WCHAR *macro_text, *macro_pos;
+
 static attrname_t attrnames[] = {
 	{ WIDE("normal"),	WA_NORMAL	},
 	{ WIDE("bold"),		WA_BOLD		},
@@ -401,32 +403,32 @@ struct kevent	 evs[2], rev;
 
 	curs_set(0);
 
-	bind_key(WIDE("?"),		WIDE("help"));
-	bind_key(WIDE("a"),		WIDE("add"));
-	bind_key(WIDE("A"),		WIDE("add-old"));
-	bind_key(WIDE("d"),		WIDE("delete"));
-	bind_key(WIDE("u"),		WIDE("undelete"));
-	bind_key(WIDE("q"),		WIDE("quit"));
-	bind_key(WIDE("<CTRL-C>"),	WIDE("quit"));
-	bind_key(WIDE("i"),		WIDE("invoice"));
-	bind_key(WIDE("b"),		WIDE("billable"));
-	bind_key(WIDE("m"),		WIDE("mark"));
-	bind_key(WIDE("U"),		WIDE("unmarkall"));
-	bind_key(WIDE("<SPACE>"),	WIDE("startstop"));
-	bind_key(WIDE("e"),		WIDE("edit-desc"));
-	bind_key(WIDE("\\"),		WIDE("edit-time"));
-	bind_key(WIDE("<TAB>"),		WIDE("showhide-inv"));
-	bind_key(WIDE("c"),		WIDE("copy"));
-	bind_key(WIDE("+"),		WIDE("add-time"));
-	bind_key(WIDE("-"),		WIDE("sub-time"));
-	bind_key(WIDE("/"),		WIDE("search"));
-	bind_key(WIDE("$"),		WIDE("sync"));
-	bind_key(WIDE("<UP>"),		WIDE("prev"));
-	bind_key(WIDE("<DOWN>"),	WIDE("next"));
-	bind_key(WIDE(":"),		WIDE("execute"));
-	bind_key(WIDE("M"),		WIDE("merge"));
-	bind_key(WIDE("r"),		WIDE("interrupt"));
-	bind_key(WIDE("R"),		WIDE("interrupt"));
+	bind_key(WIDE("?"),		WIDE("help"), 0);
+	bind_key(WIDE("a"),		WIDE("add"), 0);
+	bind_key(WIDE("A"),		WIDE("add-old"), 0);
+	bind_key(WIDE("d"),		WIDE("delete"), 0);
+	bind_key(WIDE("u"),		WIDE("undelete"), 0);
+	bind_key(WIDE("q"),		WIDE("quit"), 0);
+	bind_key(WIDE("<CTRL-C>"),	WIDE("quit"), 0);
+	bind_key(WIDE("i"),		WIDE("invoice"), 0);
+	bind_key(WIDE("b"),		WIDE("billable"), 0);
+	bind_key(WIDE("m"),		WIDE("mark"), 0);
+	bind_key(WIDE("U"),		WIDE("unmarkall"), 0);
+	bind_key(WIDE("<SPACE>"),	WIDE("startstop"), 0);
+	bind_key(WIDE("e"),		WIDE("edit-desc"), 0);
+	bind_key(WIDE("\\"),		WIDE("edit-time"), 0);
+	bind_key(WIDE("<TAB>"),		WIDE("showhide-inv"), 0);
+	bind_key(WIDE("c"),		WIDE("copy"), 0);
+	bind_key(WIDE("+"),		WIDE("add-time"), 0);
+	bind_key(WIDE("-"),		WIDE("sub-time"), 0);
+	bind_key(WIDE("/"),		WIDE("search"), 0);
+	bind_key(WIDE("$"),		WIDE("sync"), 0);
+	bind_key(WIDE("<UP>"),		WIDE("prev"), 0);
+	bind_key(WIDE("<DOWN>"),	WIDE("next"), 0);
+	bind_key(WIDE(":"),		WIDE("execute"), 0);
+	bind_key(WIDE("M"),		WIDE("merge"), 0);
+	bind_key(WIDE("r"),		WIDE("interrupt"), 0);
+	bind_key(WIDE("R"),		WIDE("interrupt"), 0);
 
 	/*
 	 * Make sure we can save (even if it's an empty file or nothing has
@@ -496,7 +498,7 @@ struct kevent	 evs[2], rev;
 		}
 #endif
 
-		while (GETCH(&c) != ERR) {
+		while (input_char(&c) != ERR) {
 #ifdef KEY_RESIZE
 			if (c == KEY_RESIZE)
 				continue;
@@ -507,8 +509,13 @@ struct kevent	 evs[2], rev;
 			TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
 				if (bi->bi_code != c)
 					continue;
-				bi->bi_func->fn_hdl();
-				goto next;;
+
+				if (!macro_text && bi->bi_macro)
+					input_macro(bi->bi_macro);
+				else if (bi->bi_func)
+					bi->bi_func->fn_hdl();
+
+				goto next;
 			}
 
 			drawstatus(WIDE("Unknown command."));
@@ -1022,7 +1029,7 @@ function_t	*f;
  * directly, rather than being looked up in the key table.
  */
 void
-bind_key(keyname, funcname)
+bind_key(keyname, funcname, is_macro)
 	const WCHAR	*keyname, *funcname;
 {
 tkey_t		*key = NULL;
@@ -1040,15 +1047,23 @@ INT		 code;
 	} else
 		code = *keyname;
 
-	if ((func = find_func(funcname)) == NULL) {
-		errbox(WIDE("Unknown function \"%"FMT_L"s\""), funcname);
-		return;
+	if (!is_macro) {
+		if ((func = find_func(funcname)) == NULL) {
+			errbox(WIDE("Unknown function \"%"FMT_L"s\""), funcname);
+			return;
+		}
 	}
 
 	/* Do we already have a binding for this key? */
 	TTS_TAILQ_FOREACH(binding, &bindings, bi_entries) {
 		if (binding->bi_code == code) {
-			binding->bi_func = func;
+			if (is_macro) {
+				binding->bi_func = NULL;
+				binding->bi_macro = STRDUP(funcname);
+			} else {
+				free(binding->bi_macro);
+				binding->bi_func = func;
+			}
 			return;
 		}
 	}
@@ -1058,8 +1073,13 @@ INT		 code;
 		return;
 
 	binding->bi_key = key;
-	binding->bi_func = func;
 	binding->bi_code = code;
+
+	if (is_macro)
+		binding->bi_macro = STRDUP(funcname);
+	else
+		binding->bi_func = func;
+
 	TTS_TAILQ_INSERT_TAIL(&bindings, binding, bi_entries);
 }
 
@@ -1191,8 +1211,10 @@ vcmderr(msg, ap)
 
 		fprintf(stderr, "\"%s\", line %d: %s\n",
 			curfile, lineno, t);
-	} else
+	} else {
+		input_macro(NULL);
 		vdrawstatus(msg, ap);
+	}
 }
 
 /*
@@ -1349,3 +1371,32 @@ int	 h, m, s = 0;
 	sleeptime = 0;
 }
 #endif	/* USE_DARWIN_POWER */
+
+void
+input_macro(s)
+	WCHAR	*s;
+{
+	free(macro_text);
+	macro_text = macro_pos = NULL;
+
+	if (!s)
+		return;
+
+	macro_text = macro_pos = STRDUP(s);
+}
+
+int
+input_char(c)
+	WCHAR	*c;
+{
+	if (macro_pos) {
+		if (*macro_pos) {
+			*c = *macro_pos++;
+			return 0;
+		}
+		free(macro_text);
+		macro_text = macro_pos = NULL;
+	}
+
+	return GETCH(c);
+}

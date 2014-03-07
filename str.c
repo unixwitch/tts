@@ -17,6 +17,7 @@ tokenise(str, res)
 {
 int		 ntoks = 0;
 const WCHAR	*p, *q;
+WCHAR		*r;
 
 	*res = NULL;
 	p = str;
@@ -24,6 +25,7 @@ const WCHAR	*p, *q;
 	for (;;) {
 	ptrdiff_t	sz;
 	int		qskip = 0;
+	int		isbsl = 0;
 
 	/* Skip leading whitespace */
 		while (ISSPACE(*p))
@@ -37,14 +39,13 @@ const WCHAR	*p, *q;
 
 		if (*q == '"') {
 	/* Quoted string - scan for end of string */
-		int	isbsl = 0;
 			p++;
 
 			while (*++q) {
 	/* Handle escaping with backslash; currently works but the \ isn't
 	 * removed from the string.
 	 */
-				if (*q == '\\') {
+				if (!isbsl && (*q == '\\')) {
 					isbsl = 1;
 					continue;
 				}
@@ -72,6 +73,33 @@ const WCHAR	*p, *q;
 		*res = realloc(*res, sizeof(WCHAR *) * (ntoks + 1));
 		(*res)[ntoks] = malloc(sizeof(WCHAR) * (sz + 1));
 		MEMCPY((*res)[ntoks], p, sz);
+
+	/* Handle \ escapes */
+		for (r = (*res)[ntoks]; r < ((*res)[ntoks] + sz);) {
+			if (!isbsl) {
+				if (*r == '\\') {
+					MEMMOVE(r, r + 1, sz - (r - (*res)[ntoks]));
+					sz--;
+					isbsl = 1;
+					continue;
+				}
+
+				r++;
+				continue;
+			}
+
+			switch (*r) {
+			case 't':	*r = '\t'; break;
+			case 'n':	*r = '\n'; break;
+			case 'r':	*r = '\r'; break;
+			case 'v':	*r = '\v'; break;
+			case '\\':	*r = '\\'; break;
+			}
+
+			isbsl = 0;
+			r++;
+		}
+
 		(*res)[ntoks][sz] = 0;
 		ntoks++;
 

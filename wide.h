@@ -78,4 +78,7 @@ extern int tts_wgetch(WINDOW *, int *);
 
 #define	WSIZEOF(s)	(sizeof(s) / sizeof(WCHAR))
 
+int	input_char(WCHAR *);
+void	input_macro(WCHAR *);
+
 #endif	/* !TTS_WIDE_H */

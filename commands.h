@@ -25,6 +25,7 @@ command_t *find_command(const WCHAR *);
 void c_bind	(size_t, WCHAR **);
 void c_style	(size_t, WCHAR **);
 void c_set	(size_t, WCHAR **);
+void c_macro	(size_t, WCHAR **);
 
 void cmderr	(const WCHAR *, ...);
 void vcmderr	(const WCHAR *, va_list);
