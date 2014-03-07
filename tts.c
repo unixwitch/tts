@@ -109,13 +109,10 @@ static io_object_t		notifier;
 static mach_port_t		ioport;
 static io_connect_t		root_port;
 
-static volatile sig_atomic_t	donesleep;
-static time_t			sleeptime;
-
-static void  power_setup(struct kevent *);
-static void  power_handle(struct kevent *);
-static void  power_event(void *, io_service_t, natural_t, void *);
-static void  prompt_sleep(void);
+static void  power_setup	(struct kevent *);
+static void  power_handle	(struct kevent *);
+static void  power_event	(void *, io_service_t, natural_t, void *);
+static void  prompt_sleep	(time_t);
 
 static void
 power_setup(ev)
@@ -175,7 +172,6 @@ power_event(ref, service, msgtype, arg)
 	natural_t	 msgtype;
 {
 static time_t	sleep_started;
-time_t		diff;
 
 	switch (msgtype) {
 	case kIOMessageSystemWillSleep:
@@ -188,10 +184,7 @@ time_t		diff;
 		/* System has finished wake-up; calculate the sleep time and
 		 * prompt the user.
 		 */
-		time(&diff);
-		diff -= sleep_started;
-		sleeptime += diff;
-		prompt_sleep();
+		prompt_sleep(time(NULL) - sleep_started);
 		break;
 	}
 }
@@ -765,7 +758,8 @@ char	 input[1024];
 
 #ifdef	USE_DARWIN_POWER
 static void
-prompt_sleep()
+prompt_sleep(sleeptime)
+	time_t	sleeptime;
 {
 /*
  * We woke from sleep.  If there's a running entry, prompt the user to
@@ -774,8 +768,6 @@ prompt_sleep()
  */
 WCHAR	 pr[128];
 int	 h, m, s = 0;
-
-	donesleep = 0;
 
 /* Only prompt if an entry is running */
 	if (!running)
@@ -793,17 +785,14 @@ int	 h, m, s = 0;
 		 WIDE("Remove %02d:%02d:%02d time asleep from running entry?"),
 		 h, m, s);
 
-	if (!yesno(pr)) {
-		sleeptime = 0;
+	if (!yesno(pr))
 		return;
-	}
 
 /* 
  * This is a bit of a fudge, but it has the desired effect.  Alternatively
  * we could merge en_started into en_secs, then subtract that.
  */
 	running->en_started += sleeptime;
-	sleeptime = 0;
 }
 #endif	/* USE_DARWIN_POWER */
 
