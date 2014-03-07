@@ -9,6 +9,7 @@
  */
 
 #include	<sys/types.h>
+#include	<sys/select.h>
 
 #include	<wchar.h>
 #include	<ctype.h>
@@ -43,7 +44,7 @@
 # include	<IOKit/pwr_mgt/IOPMLib.h>
 # include	<IOKit/IOMessage.h>
 
-# include	<pthread.h>
+# include	<alloca.h>
 #endif
 
 #include	"tailq.h"
@@ -199,93 +200,68 @@ variable_t variables[] = {
 };
 
 #ifdef USE_DARWIN_POWER
-static pthread_t power_thread;
-static io_connect_t root_port;
-static volatile sig_atomic_t donesleep;
-static time_t sleeptime;
+static IONotificationPortRef	port_ref;
+static io_object_t		notifier;
+static mach_port_t		ioport;
+static io_connect_t		root_port;
 
-static void *power_thread_run(void *);
+static volatile sig_atomic_t	donesleep;
+static time_t			sleeptime;
+
+static void  power_setup(struct kevent64_s *);
+static void  power_handle(struct kevent64_s *);
 static void  power_event(void *, io_service_t, natural_t, void *);
 static void  prompt_sleep(void);
 
 static void
-sigsleep(sig)
+power_setup(ev)
+	struct kevent64_s	*ev;
 {
-/* Delivered from the power thread as SIGUSR1 */
-	donesleep = 1;
-}
+mach_port_t	pset;
+int		ret;
 
-/*
- * Darwin power notifications are delivered from IOKit via Mach ports, which
- * is incompatible with TTS's curses-based main loop.  We therefore spawn a
- * separate thread to listen for these events, and when we receive one, we
- * translate it into a signal (SIGUSR1) which is delivered to the main thread
- * to handle.  The signal will interrupt getch().
- */
-static void *
-power_thread_run(arg)
-	void	*arg;
-{
-struct kevent		ev, rev;
-int			kq;
-sigset_t		ss;
-IONotificationPortRef	port_ref;
-io_object_t		notifier;
-mach_port_t		ioport;
-
-/* Block SIGUSR1 so it's always delivered to the main thread, not us */
-	sigemptyset(&ss);
-	sigaddset(&ss, SIGUSR1);
-	pthread_sigmask(SIG_BLOCK, &ss, NULL);
+	if ((ret = mach_port_allocate(mach_task_self(),
+				       MACH_PORT_RIGHT_PORT_SET,
+				       &pset)) != KERN_SUCCESS) {
+		fprintf(stderr, "mach_port_allocate: %s [%x]\n",
+			mach_error_string(ret), ret);
+		exit(1);
+	}
 
 /* Register a handler for sleep and wake events */
 	root_port = IORegisterForSystemPower(NULL, &port_ref, power_event,
 			&notifier);
 	ioport = IONotificationPortGetMachPort(port_ref);
-	EV_SET(&ev, ioport, EVFILT_MACHPORT, EV_ADD, 0, 0, 0);
+	EV_SET64(ev, pset, EVFILT_MACHPORT, EV_ADD, 0, 0, 0, 0, 0);
 
-/* Create our queue */
-	if ((kq = kqueue()) == -1) {
-		perror("kqueue");
+	if ((ret = mach_port_insert_member(mach_task_self(), ioport,
+					   pset)) != KERN_SUCCESS) {
+		fprintf(stderr, "mach_port_insert_member: %s [%x]\n",
+			mach_error_string(ret), ret);
+		exit(1);
+	}
+}
+
+static void
+power_handle(ev)
+	struct kevent64_s	*ev;
+{
+mach_msg_return_t	 ret;
+void			*msg = alloca(ev->data);
+
+/* Receive the message */
+	memset(msg, 0, ev->data);
+	ret = mach_msg(msg, MACH_RCV_MSG, 0, ev->data, ioport,
+		       MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+
+	if (ret != MACH_MSG_SUCCESS) {
+		fprintf(stderr, "mach_msg: %s [%x]\n",
+			mach_error_string(ret), ret);
 		exit(1);
 	}
 
-	for (;;) {
-	int	nev;
-
-	struct {
-		mach_msg_header_t	hdr;
-		char			data[8192];
-		mach_msg_trailer_t	trailer;
-	} msg;
-	mach_msg_return_t ret;
-
-	/* Wait for an event */
-		if ((nev = kevent(kq, &ev, 1, &rev, 1, NULL)) == -1) {
-			perror("kevent");
-			exit(1);
-		}
-
-		if (nev == 0)
-			continue;
-
-	/* Receive the message */
-		memset(&msg, 0, sizeof(ret));
-		ret = mach_msg(&msg.hdr, MACH_RCV_MSG, 0, sizeof(msg), ioport,
-			       MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
-
-		if (ret != MACH_MSG_SUCCESS) {
-			fprintf(stderr, "mach_msg: %s [%x]\n",
-				mach_error_string(ret), ret);
-			exit(1);
-		}
-
-	/* Give the message to IOKit to handle */
-		IODispatchCalloutFromMessage(NULL, &msg.hdr, port_ref);
-	}
-
-	/*NOTREACHED*/
-	return NULL;
+/* Give the message to IOKit to handle */
+	IODispatchCalloutFromMessage(NULL, msg, port_ref);
 }
 
 static void
@@ -306,12 +282,12 @@ time_t		diff;
 
 	case kIOMessageSystemHasPoweredOn:
 		/* System has finished wake-up; calculate the sleep time and
-		 * notify the main thread.
+		 * prompt the user.
 		 */
 		time(&diff);
 		diff -= sleep_started;
 		sleeptime += diff;
-		raise(SIGUSR1);
+		prompt_sleep();
 		break;
 	}
 }
@@ -327,18 +303,36 @@ int
 main(argc, argv)
 	char	**argv;
 {
-struct passwd	*pw;
-char		 rcfile[PATH_MAX + 1];
+struct passwd		*pw;
+char			 rcfile[PATH_MAX + 1];
+#ifdef	USE_DARWIN_POWER
+int			 kq;
+struct kevent64_s	 evs[2], rev;
+# define	STDIN_EV	0
+# define	IOKIT_EV	1
+#endif
 
 	setlocale(LC_ALL, "");
 
+#ifdef USE_DARWIN_POWER
+	if ((kq = kqueue()) == -1) {
+		perror("kqueue");
+		return 1;
+	}
+
+	memset(evs, 0, sizeof(evs));
+
+	EV_SET64(&evs[STDIN_EV], STDIN_FILENO, EVFILT_READ, EV_ADD, 0, 0, 0, 0, 0);
+	power_setup(&evs[IOKIT_EV]);
+
+	if (kevent64(kq, evs, 2, NULL, 0, 0, NULL) == -1) {
+		perror("kevent");
+		return 1;
+	}
+#endif
+
 	signal(SIGTERM, sigexit);
 	signal(SIGINT, sigexit);
-
-#ifdef USE_DARWIN_POWER
-	signal(SIGUSR1, sigsleep);
-	pthread_create(&power_thread, NULL, power_thread_run, NULL);
-#endif
 
 	searchhist = hist_new();
 	prompthist = hist_new();
@@ -360,7 +354,7 @@ char		 rcfile[PATH_MAX + 1];
 	cbreak();
 	noecho();
 	nonl();
-	halfdelay(5);
+	nodelay(stdscr, 1);
 
 	pair_content(0, &default_fg, &default_bg);
 
@@ -454,26 +448,61 @@ char		 rcfile[PATH_MAX + 1];
 	for (;;) {
 	INT		 c;
 	binding_t	*bi;
+#ifdef	USE_DARWIN_POWER
+	struct timespec	 timeout;
+	int		 nev;
+#else
+	fd_set		 in_set;
+	struct timeval	 timeout;
+#endif
+	
 
 		if (doexit)
 			break;
-
-#ifdef USE_DARWIN_POWER
-		if (donesleep)
-			prompt_sleep();
-#endif
 
 		drawheader();
 		drawentries();
 		wrefresh(listwin);
 
+#ifdef	USE_DARWIN_POWER
+		timeout.tv_sec = 0;
+		timeout.tv_nsec = 500000000;
+
+		if ((nev = kevent64(kq, NULL, 0, &rev, 1, 0,
+				  running ? &timeout : NULL)) == -1) {
+			perror("kevent");
+			return 1;
+		}
+
+		if (nev == 0)
+			continue;
+
+		if (rev.filter == EVFILT_MACHPORT) {
+			power_handle(&rev);
+			continue;
+		}
+#else
+	/* Wait for input to be ready. */
+		FD_ZERO(&in_set);
+		FD_SET(STDIN_FILENO, &in_set);
+
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 500000;
+
+	/*
+	 * If there's a running entry, wake up in 0.5 seconds time to update
+	 * the display.  Otherwise, we can sleep forever.
+	 */
+		select(STDIN_FILENO + 1, &in_set, NULL, NULL,
+		       running ? &timeout : NULL);
+
+		if (!FD_ISSET(STDIN_FILENO, &in_set))
+			continue;
+#endif
+
 		if (GETCH(&c) == ERR) {
 			if (doexit)
 				break;
-#ifdef USE_DARWIN_POWER
-			if (donesleep)
-				prompt_sleep();
-#endif
 			if (time(NULL) - laststatus >= 2)
 				drawstatus(WIDE(""));
 			if (time(NULL) - lastsave > 60)
