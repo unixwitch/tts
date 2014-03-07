@@ -455,7 +455,6 @@ struct kevent64_s	 evs[2], rev;
 	fd_set		 in_set;
 	struct timeval	 timeout;
 #endif
-	
 
 		if (doexit)
 			break;
@@ -509,32 +508,31 @@ struct kevent64_s	 evs[2], rev;
 			continue;
 #endif
 
-		if (GETCH(&c) == ERR) {
-			if (doexit)
-				break;
-			if (time(NULL) - laststatus >= 2)
-				drawstatus(WIDE(""));
-			if (time(NULL) - lastsave > 60)
-				save();
-			continue;
-		}
-
+		while (GETCH(&c) != ERR) {
 #ifdef KEY_RESIZE
-		if (c == KEY_RESIZE)
-			continue;
+			if (c == KEY_RESIZE)
+				continue;
 #endif
 
-		drawstatus(WIDE(""));
+			drawstatus(WIDE(""));
 
-		TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
-			if (bi->bi_code != c)
-				continue;
-			bi->bi_func->fn_hdl();
-			goto next;
+			TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
+				if (bi->bi_code != c)
+					continue;
+				bi->bi_func->fn_hdl();
+				goto next;;
+			}
+
+			drawstatus(WIDE("Unknown command."));
+		next:	;
 		}
 
-		drawstatus(WIDE("Unknown command."));
-	next:	;
+		if (doexit)
+			break;
+		if (time(NULL) - laststatus >= 2)
+			drawstatus(WIDE(""));
+		if (time(NULL) - lastsave > 60)
+			save();
 	}
 
 	save();
