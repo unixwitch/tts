@@ -354,7 +354,7 @@ struct kevent	 evs[2], rev;
 	cbreak();
 	noecho();
 	nonl();
-	nodelay(stdscr, 1);
+	nodelay(stdscr, TRUE);
 
 	pair_content(0, &default_fg, &default_bg);
 

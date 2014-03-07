@@ -161,7 +161,7 @@ histent_t	*histpos = NULL;
 		pos = STRLEN(input);
 	}
 
-	pwin = newwin(1, COLS, LINES - 2, 0);
+	pwin = newwin(1, COLS, LINES - 1, 0);
 	keypad(pwin, TRUE);
 
 	wattr_on(pwin, style_fg(sy_status), NULL);
@@ -301,7 +301,8 @@ end:	;
 
 	curs_set(0);
 	delwin(pwin);
-	wtouchln(statwin, 1, 1, 1);
+	wtouchln(statwin, 0, 1, 1);
+	wrefresh(statwin);
 	hist_add(hist, input);
 	return STRDUP(input);
 }
