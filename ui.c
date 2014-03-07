@@ -124,9 +124,13 @@ yesno(msg)
 WINDOW	*pwin;
 INT	 c;
 
-	pwin = newwin(1, COLS, LINES - 2, 0);
+	pwin = newwin(1, COLS, LINES - 1, 0);
 	keypad(pwin, TRUE);
+
 	wattron(pwin, A_BOLD);
+	wattr_on(pwin, style_fg(sy_status), NULL);
+	wbkgd(pwin, style_bg(sy_status));
+
 	wmove(pwin, 0, 0);
 	WADDSTR(pwin, msg);
 	WADDSTR(pwin, WIDE(" [y/N]? "));
@@ -138,6 +142,10 @@ INT	 c;
 #endif
 			)
 		;
+
+	delwin(pwin);
+	wtouchln(statwin, 0, 1, 1);
+	wrefresh(statwin);
 
 	return (c == 'Y' || c == 'y') ? 1 : 0;
 }
