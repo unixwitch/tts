@@ -1,6 +1,9 @@
+.SUFFIXES: .c .o .d .h
+
 VPATH		= @top_srcdir@
 
 CC		= @CC@
+MAKEDEPEND	= @CC@ -M
 # _GNU_SOURCE is required for wcsdup() on older version of glibc that don't
 # implement XPG7.
 CPPFLAGS	= @CPPFLAGS@ -D_XOPEN_SOURCE=700 -D_XOPEN_SOURCE_EXTENDED -D__EXTENSIONS__
@@ -25,8 +28,22 @@ install:
 .c.o:
 	${CC} ${CPPFLAGS} ${CFLAGS} -c $<
 
+.c.d:
+	$(MAKEDEPEND) $(CPPFLAGS) $(CFLAGS) $< -o $@
+
 vers.c: vers.c.sh configure.ac
 	sh @top_srcdir@/vers.c.sh @top_srcdir@/configure.ac
 
 clean:
-	rm -f tts *.o
+	rm -f tts ${OBJS} $(OBJS:.o=.d) 
+
+depend: $(OBJS:.o=.d)
+	sed '/^# Do not remove this line -- make depend needs it/,$$ d' \
+		<Makefile >Makefile.new
+	echo '# Do not remove this line -- make depend needs it' >>Makefile.new
+	cat *.d >> Makefile.new
+	mv Makefile.new Makefile
+
+.PHONY: depend clean install libuv
+
+# Do not remove this line -- make depend needs it

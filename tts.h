@@ -17,6 +17,9 @@
 #include	"queue.h"
 #include	"entry.h"
 
+extern char const *tts_version;
+extern time_t laststatus;
+
 /*
  * Configuration options.
  */
