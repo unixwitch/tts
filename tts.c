@@ -470,6 +470,10 @@ struct kevent64_s	 evs[2], rev;
 
 		if ((nev = kevent64(kq, NULL, 0, &rev, 1, 0,
 				  running ? &timeout : NULL)) == -1) {
+			if (doexit)
+				break;
+			if (errno == EINTR)
+				continue;
 			perror("kevent");
 			return 1;
 		}
@@ -493,8 +497,13 @@ struct kevent64_s	 evs[2], rev;
 	 * If there's a running entry, wake up in 0.5 seconds time to update
 	 * the display.  Otherwise, we can sleep forever.
 	 */
-		select(STDIN_FILENO + 1, &in_set, NULL, NULL,
-		       running ? &timeout : NULL);
+		if (select(STDIN_FILENO + 1, &in_set, NULL, NULL,
+		       running ? &timeout : NULL) == -1) {
+			if (doexit)
+				break;
+			if (errno == EINTR)
+				continue;
+		}
 
 		if (!FD_ISSET(STDIN_FILENO, &in_set))
 			continue;
