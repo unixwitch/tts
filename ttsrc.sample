@@ -101,8 +101,8 @@ bind k prev
 #
 style header yellow,bold blue
 style status yellow,bold blue
+style date white,underline black
 style entry white black
 style selected yellow,bold red
 # Use bold *and* underline, because we already bolded 'selected' above.
-style running bold,underline
-style date underline,bold
+style running white,bold,underline black
