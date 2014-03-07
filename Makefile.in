@@ -1,13 +1,15 @@
 VPATH		= @top_srcdir@
 
 CC		= @CC@
-CPPFLAGS	= @CPPFLAGS@
+# _GNU_SOURCE is required for wcsdup() on older version of glibc that don't
+# implement XPG7.
+CPPFLAGS	= @CPPFLAGS@ -D_XOPEN_SOURCE=700 -D_XOPEN_SOURCE_EXTENDED -D__EXTENSIONS__
 CFLAGS		= @CFLAGS@ -I@top_srcdir@ -I@top_builddir@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 INSTALL		= @INSTALL@
 
-OBJS		= tts.o
+OBJS		= tts.o wide.o entry.o ui.o functions.o commands.o bindings.o str.o
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
