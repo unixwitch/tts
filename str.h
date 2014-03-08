@@ -15,10 +15,15 @@
 
 #include	"wide.h"
 
+#define	TIME_HMS	0 /* HH:MM:SS	*/
+#define	TIME_HM		1 /* HH:MM	*/
+#define	TIME_AHMS	2 /* 1h10m37s	*/
+#define	TIME_AHM	3 /* 1h10w	*/
+
 size_t	 tokenise	(const wchar_t *, wchar_t ***result);
 void	 tokfree	(wchar_t ***);
 time_t	 parsetime	(const wchar_t *);
-wchar_t	*maketime	(time_t);
+wchar_t	*maketime	(time_t, int format);
 wchar_t	*escstr		(const wchar_t *);
 
 #endif	/* !TTS_STR_H */

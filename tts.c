@@ -92,6 +92,7 @@ int mark_advance = 1;
 int bill_advance = 0;
 int bill_increment = 0;
 wchar_t *auto_nonbillable;
+int time_format;
 
 variable_t variables[] = {
 	{ L"delete_advance",	VTYPE_BOOL,	&delete_advance },
@@ -100,6 +101,7 @@ variable_t variables[] = {
 	{ L"show_billable",	VTYPE_BOOL,	&show_billable },
 	{ L"auto_non_billable",	VTYPE_STRING,	&auto_nonbillable },
 	{ L"bill_increment",	VTYPE_INT,	&bill_increment },
+	{ L"time_format",	VTYPE_INT,	&time_format },
 	{ }
 };
 

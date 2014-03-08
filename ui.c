@@ -119,13 +119,12 @@ wchar_t	title[64];
 	waddwstr(titwin, title);
 
 	if (itime > 0) {
-	wchar_t	str[128];
-	int	h, m, s;
+	wchar_t	str[128], *tm;
 	time_t	passed = time(NULL) - itime;
 
-		time_to_hms(passed, h, m, s);
-		swprintf(str, wsizeof(str), L"  *** MARK INTERRUPT: %02d:%02d:%02d ***",
-			h, m, s);
+		tm = maketime(passed, time_format);
+		swprintf(str, wsizeof(str), L"  *** MARK INTERRUPT: %ls ***", tm);
+		free(tm);
 
 		wattron(titwin, A_BOLD);
 		waddwstr(titwin, str);
@@ -431,9 +430,9 @@ chtype	 oldbg;
 
 	for (; en; en = TTS_TAILQ_NEXT(en, en_entries)) {
 	time_t	 n;
-	int	 h, s, m;
 	wchar_t	 flags[10], stime[16], *p;
 	attr_t	 attrs = 0;
+	wchar_t	*etime;
 
 		if (!showinv && en->en_flags.efl_invoiced)
 			continue;
@@ -443,11 +442,11 @@ chtype	 oldbg;
 		if (lastday != entry_day(en)) {
 		struct tm	*lt;
 		wchar_t		 lbl[128];
-		wchar_t		*itime = maketime(entry_time_for_day(entry_day(en), 1, 0)),
-				*ntime = maketime(entry_time_for_day(entry_day(en), 0, 0)),
-				*btime = maketime(entry_time_for_day(entry_day(en), 2, bill_increment)),
+		wchar_t		*itime = maketime(entry_time_for_day(entry_day(en), 1, 0), time_format),
+				*ntime = maketime(entry_time_for_day(entry_day(en), 0, 0), time_format),
+				*btime = maketime(entry_time_for_day(entry_day(en), 2, bill_increment), time_format),
 				*ttime = maketime(entry_time_for_day(entry_day(en), 1, 0) +
-						  entry_time_for_day(entry_day(en), 0, 0));
+						  entry_time_for_day(entry_day(en), 0, 0), time_format);
 		wchar_t		 hdrtext[256];
 		int		 n = 0;
 
@@ -473,33 +472,33 @@ chtype	 oldbg;
 			if (*itime) {
 				wcslcat(hdrtext, L"I:", wsizeof(hdrtext));
 				wcslcat(hdrtext, itime, wsizeof(hdrtext));
-				free(itime);
 				n++;
 			}
+			free(itime);
 
 			if (*ntime) {
 				if (n++)
 					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
 				wcslcat(hdrtext, L"N:", wsizeof(hdrtext));
 				wcslcat(hdrtext, ntime, wsizeof(hdrtext));
-				free(ntime);
 			}
+			free(ntime);
 
 			if (*ttime) {
 				if (n++)
 					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
 				wcslcat(hdrtext, L"T:", wsizeof(hdrtext));
 				wcslcat(hdrtext, ttime, wsizeof(hdrtext));
-				free(ttime);
 			}
+			free(ttime);
 
 			if (*btime) {
 				if (n++)
 					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
 				wcslcat(hdrtext, L"B:", wsizeof(hdrtext));
 				wcslcat(hdrtext, btime, wsizeof(hdrtext));
-				free(btime);
 			}
+			free(btime);
 
 			wcslcat(hdrtext, L"]", wsizeof(hdrtext));
 
@@ -558,14 +557,11 @@ chtype	 oldbg;
 		n = en->en_secs;
 		if (en->en_started)
 			n += time(NULL) - en->en_started;
-		h = n / (60 * 60);
-		n %= (60 * 60);
-		m = n / 60;
-		n %= 60;
-		s = n;
 
-		swprintf(stime, wsizeof(stime), L"%02d:%02d:%02d%c ",
-			h, m, s, (itime && (en == running)) ? '*' : ' ');
+		etime = maketime(n, time_format);
+		swprintf(stime, wsizeof(stime), L"%8ls%c ",
+			*etime ? etime : L"0m", (itime && (en == running)) ? '*' : ' ');
+		free(etime);
 		waddwstr(listwin, stime);
 
 		memset(flags, 0, sizeof(flags));
@@ -627,7 +623,7 @@ wchar_t	*defstr = NULL;
 wchar_t	*tstr;
 time_t	 ret;
 
-	defstr = maketime(def);
+	defstr = maketime(def, TIME_AHMS);
 
 	if ((tstr = prompt(pr, defstr, NULL)) == NULL) {
 		free(defstr);

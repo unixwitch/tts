@@ -73,4 +73,6 @@ size_t wcslcat(wchar_t *s1, const wchar_t *s2, size_t n);
 size_t wcslcpy(wchar_t *s1, const wchar_t *s2, size_t n);
 #endif
 
+extern int time_format;
+
 #endif	/* !TTS_H */

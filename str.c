@@ -174,6 +174,9 @@ time_t	i = 0, r = 0;
 			r += i;
 			i = 0;
 			continue;
+
+		case L' ':
+			continue;
 		}
 
 		if (wcschr(L"0123456789", *tm) == NULL)
@@ -187,28 +190,45 @@ time_t	i = 0, r = 0;
 }
 
 wchar_t *
-maketime(tm)
+maketime(tm, fmt)
 	time_t	tm;
 {
 wchar_t	res[64] = {};
 wchar_t	t[16];
 
+	if (fmt == TIME_HMS) {
+	int	h, m, s;
+		time_to_hms(tm, h, m, s);
+		swprintf(t, wsizeof(t), L"%02d:%02d:%02d",
+			 h, m, s);
+		return wcsdup(t);
+	}
+
+	if (fmt == TIME_HM) {
+	int	h, m, s;
+		time_to_hms(tm, h, m, s);
+		swprintf(t, wsizeof(t), L"%02d:%02d", h, m);
+		return wcsdup(t);
+	}
+
 	if (tm >= (60 * 60)) {
-		swprintf(t, wsizeof(t), L"%dh", tm / (60 * 60));
+		swprintf(t, wsizeof(t), L"%2dh ", tm / (60 * 60));
 		wcslcat(res, t, wsizeof(res));
 		tm %= (60 * 60);
 	}
 
 	if (tm >= 60) {
-		swprintf(t, wsizeof(t), L"%dm", tm / 60);
+		swprintf(t, wsizeof(t), L"%2dm ", tm / 60);
 		wcslcat(res, t, wsizeof(res));
 		tm %= 60;
 	}
 
-	if (tm) {
-		swprintf(t, wsizeof(t), L"%ds", tm);
+	if (fmt == TIME_AHMS && tm) {
+		swprintf(t, wsizeof(t), L"%2ds ", tm);
 		wcslcat(res, t, wsizeof(res));
 	}
+
+	res[wcslen(res) - 1] = '\0';
 
 	return wcsdup(res);
 }

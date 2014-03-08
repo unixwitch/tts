@@ -11,6 +11,15 @@
 #set mark_advance 1
 #set delete_advance 1
 
+# Select the time format used in the display; value can be from 0 to 3.
+#
+# 0:  10:03:37 (default)
+# 1:  10:03
+# 2:  10h 3m 37s
+# 3:  10h 3m
+#
+#set time_format 0
+
 #### Billing options
 #
 # If set, show billable time in each daily summary.
