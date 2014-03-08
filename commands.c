@@ -106,6 +106,7 @@ c_set(argc, argv)
 {
 variable_t	*var;
 int		 val;
+wchar_t		*p = NULL;
 
 	if (argc != 3) {
 		cmderr(L"Usage: set <variable> <value>");
@@ -143,7 +144,13 @@ int		 val;
 		break;
 
 	case VTYPE_INT:
-		*(int *)var->va_addr = wcstol(argv[2], NULL, 0);
+		val = wcstol(argv[2], &p, 0);
+		if (!*argv[2] || *p) {
+			cmderr(L"Invalid number \"%ls\"", argv[2]);
+			break;
+		}
+
+		*(int *)var->va_addr = val;
 		break;
 	}
 }
