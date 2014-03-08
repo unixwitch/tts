@@ -108,7 +108,7 @@
 #   HAVE_CURSES_ENHANCED and ax_cv_curses_enhanced are defined if the
 #   library supports the X/Open Enhanced Curses definition.  In particular,
 #   the wide-character types attr_t, cchar_t and wint_t, the functions
-#   wattr_set() and wget_wch() and the macros WA_NORMAL and _XOPEN_CURSES
+#   wattr_set() and wget_wch() and the macros WA_BOLD and _XOPEN_CURSES
 #   are checked.  The Ncurses library does NOT conform to this definition,
 #   although NcursesW does.
 #
@@ -228,7 +228,7 @@ AC_DEFUN([AX_WITH_CURSES], [
                         chtype a = A_BOLD;
                         int b = KEY_LEFT;
                         chtype c = COLOR_PAIR(1) & A_COLOR;
-                        attr_t d = WA_NORMAL;
+                        attr_t d = WA_BOLD;
                         cchar_t e;
                         wint_t f;
                         int g = getattrs(stdscr);
@@ -259,7 +259,7 @@ AC_DEFUN([AX_WITH_CURSES], [
                         chtype a = A_BOLD;
                         int b = KEY_LEFT;
                         chtype c = COLOR_PAIR(1) & A_COLOR;
-                        attr_t d = WA_NORMAL;
+                        attr_t d = WA_BOLD;
                         cchar_t e;
                         wint_t f;
                         int g = getattrs(stdscr);
@@ -290,7 +290,7 @@ AC_DEFUN([AX_WITH_CURSES], [
                         chtype a = A_BOLD;
                         int b = KEY_LEFT;
                         chtype c = COLOR_PAIR(1) & A_COLOR;
-                        attr_t d = WA_NORMAL;
+                        attr_t d = WA_BOLD;
                         cchar_t e;
                         wint_t f;
                         int g = getattrs(stdscr);
@@ -443,7 +443,7 @@ AC_DEFUN([AX_WITH_CURSES], [
                             chtype a = A_BOLD;
                             int b = KEY_LEFT;
                             chtype c = COLOR_PAIR(1) & A_COLOR;
-                            attr_t d = WA_NORMAL;
+                            attr_t d = WA_BOLD;
                             cchar_t e;
                             wint_t f;
                             initscr();

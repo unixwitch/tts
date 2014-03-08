@@ -432,7 +432,7 @@ chtype	 oldbg;
 	time_t	 n;
 	int	 h, s, m;
 	wchar_t	 flags[10], stime[16], *p;
-	attr_t	 attrs = WA_NORMAL;
+	attr_t	 attrs = 0;
 
 		if (!showinv && en->en_flags.efl_invoiced)
 			continue;

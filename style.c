@@ -22,23 +22,23 @@ style_t sy_header	= { 1, 0 },
 	sy_date		= { 6, 0 };
 
 static attrname_t attrnames[] = {
-	{ L"normal",	WA_NORMAL	},
-	{ L"bold",		WA_BOLD		},
+	{ L"normal",	0		},
+	{ L"bold",	WA_BOLD		},
 	{ L"reverse",	WA_REVERSE	},
 	{ L"blink",	WA_BLINK	},
-	{ L"dim",		WA_DIM		},
+	{ L"dim",	WA_DIM		},
 	{ L"underline",	WA_UNDERLINE	},
 	{ L"standout",	WA_STANDOUT	}
 };
 
 static colour_t colours[] = {
 	{ L"black",	COLOR_BLACK	},
-	{ L"red",		COLOR_RED	},
+	{ L"red",	COLOR_RED	},
 	{ L"green",	COLOR_GREEN	},
 	{ L"yellow",	COLOR_YELLOW	},
-	{ L"blue",		COLOR_BLUE	},
+	{ L"blue",	COLOR_BLUE	},
 	{ L"magenta",	COLOR_MAGENTA	},
-	{ L"cyan",		COLOR_CYAN	},
+	{ L"cyan",	COLOR_CYAN	},
 	{ L"white",	COLOR_WHITE	}
 };
 
@@ -79,7 +79,7 @@ style_clear(sy)
 	style_t	*sy;
 {
 	init_pair(sy->sy_pair, default_fg, default_bg);
-	sy->sy_attrs = WA_NORMAL;
+	sy->sy_attrs = 0;
 }
 
 int
@@ -87,7 +87,7 @@ style_set(sy, fg, bg)
 	style_t		*sy;
 	const wchar_t	*fg, *bg;
 {
-	sy->sy_attrs = WA_NORMAL;
+	sy->sy_attrs = 0;
 	init_pair(sy->sy_pair, default_fg, default_bg);
 	return style_add(sy, fg, bg);
 }

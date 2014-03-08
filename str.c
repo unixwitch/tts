@@ -8,6 +8,9 @@
  * warranty.
  */
 
+#include	<stddef.h>
+#include	<wctype.h>
+
 #include	"str.h"
 
 size_t
