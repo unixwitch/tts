@@ -65,4 +65,12 @@ void		 hist_add(history_t *, wchar_t const *);
 extern history_t *searchhist;
 extern history_t *prompthist;
 
+#ifndef HAVE_WCSLCPY
+size_t wcslcat(wchar_t *s1, const wchar_t *s2, size_t n);
+#endif
+
+#ifndef HAVE_WCSLCAT
+size_t wcslcpy(wchar_t *s1, const wchar_t *s2, size_t n);
+#endif
+
 #endif	/* !TTS_H */
