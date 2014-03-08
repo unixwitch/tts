@@ -8,6 +8,8 @@
  * warranty.
  */
 
+#include	<stdlib.h>
+
 #include	"commands.h"
 #include	"style.h"
 #include	"bindings.h"
@@ -136,6 +138,7 @@ int		 val;
 		break;
 
 	case VTYPE_STRING:
+		free(*(wchar_t **)var->va_addr);
 		*(wchar_t **)var->va_addr = wcsdup(argv[2]);
 		break;
 
