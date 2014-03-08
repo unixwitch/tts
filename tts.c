@@ -320,7 +320,7 @@ struct kevent	 evs[2], rev;
 		}
 #endif
 
-		while (input_char(&c) != ERR) {
+		while (input_char(stdscr, &c) != ERR) {
 #ifdef KEY_RESIZE
 			if (c == KEY_RESIZE)
 				continue;
@@ -737,7 +737,8 @@ input_macro(s)
 }
 
 int
-input_char(c)
+input_char(win, c)
+	WINDOW	*win;
 	wchar_t	*c;
 {
 	if (macro_pos) {
@@ -749,5 +750,5 @@ input_char(c)
 		macro_text = macro_pos = NULL;
 	}
 
-	return get_wch(c);
+	return wget_wch(win, c);
 }

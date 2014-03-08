@@ -177,7 +177,7 @@ wint_t	 c;
 	waddwstr(pwin, L" [y/N]? ");
 	wattroff(pwin, A_BOLD);
 
-	while (input_char(&c) == ERR
+	while (input_char(pwin, &c) == ERR
 #ifdef KEY_RESIZE
 			|| (c == KEY_RESIZE)
 #endif
@@ -231,7 +231,7 @@ histent_t	*histpos = NULL;
 		wmove(pwin, 0, wcslen(msg) + 1 + pos);
 		wrefresh(pwin);
 
-		if (input_char(&c) == ERR)
+		if (input_char(pwin, &c) == ERR)
 			continue;
 
 		switch (c) {

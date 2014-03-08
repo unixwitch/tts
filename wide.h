@@ -18,7 +18,7 @@
 
 #define	wsizeof(s)	(sizeof(s) / sizeof(wchar_t))
 
-int	input_char(wchar_t *);
-void	input_macro(wchar_t *);
+int	input_char	(WINDOW *, wchar_t *);
+void	input_macro	(wchar_t *);
 
 #endif	/* !TTS_WIDE_H */
