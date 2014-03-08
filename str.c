@@ -45,9 +45,6 @@ wchar_t		*r;
 			p++;
 
 			while (*++q) {
-	/* Handle escaping with backslash; currently works but the \ isn't
-	 * removed from the string.
-	 */
 				if (!isbsl && (*q == '\\')) {
 					isbsl = 1;
 					continue;
