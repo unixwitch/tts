@@ -17,7 +17,8 @@
 
 size_t	 tokenise	(const wchar_t *, wchar_t ***result);
 void	 tokfree	(wchar_t ***);
-time_t	 parsetime	(wchar_t *);
+time_t	 parsetime	(const wchar_t *);
 wchar_t	*maketime	(time_t);
+wchar_t	*escstr		(const wchar_t *);
 
 #endif	/* !TTS_STR_H */

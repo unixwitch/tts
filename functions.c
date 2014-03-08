@@ -527,10 +527,12 @@ binding_t	*bi;
 		else
 			swprintf(t, wsizeof(t), L"%lc", bi->bi_code);
 
-		if (bi->bi_macro)
+		if (bi->bi_macro) {
+		wchar_t	*esc = escstr(bi->bi_macro);
 			swprintf(s, wsizeof(s), L"%-10ls execute macro: %ls",
-				t, bi->bi_macro);
-		else
+				t, esc);
+			free(esc);
+		} else
 			swprintf(s, wsizeof(s), L"%-10ls %ls (%ls)",
 				t, bi->bi_func->fn_desc, bi->bi_func->fn_name);
 

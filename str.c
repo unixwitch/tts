@@ -135,7 +135,7 @@ wchar_t	**p;
 
 time_t
 parsetime(tm)
-	wchar_t	*tm;
+	const wchar_t	*tm;
 {
 int	h = 0, m = 0, s = 0;
 time_t	i = 0, r = 0;
@@ -210,4 +210,46 @@ wchar_t	t[16];
 	}
 
 	return wcsdup(res);
+}
+
+wchar_t *
+escstr(s)
+	const wchar_t	*s;
+{
+wchar_t	*ret, *p;
+
+	if ((ret = calloc(sizeof(wchar_t), wcslen(s) * 2 + 1)) == NULL)
+		return NULL;
+
+	for (p = ret; *s; s++) {
+		switch (*s) {
+		case '\\':
+			*p++ = L'\\';
+			*p++ = L'\\';
+			continue;
+		case '\n':
+			*p++ = L'\\';
+			*p++ = L'n';
+			continue;
+		case '\t':
+			*p++ = L'\\';
+			*p++ = L't';
+			continue;
+		case '\v':
+			*p++ = L'\\';
+			*p++ = L'v';
+			continue;
+		case '\r':
+			*p++ = L'\\';
+			*p++ = L'r';
+			continue;
+		case '"':
+			*p++ = L'\\';
+			*p++ = L'"';
+			continue;
+		}
+
+		*p++ = *s;
+	}
+	return ret;
 }
