@@ -741,14 +741,46 @@ input_char(win, c)
 	WINDOW	*win;
 	wchar_t	*c;
 {
-	if (macro_pos) {
-		if (*macro_pos) {
-			*c = *macro_pos++;
-			return 0;
-		}
-		free(macro_text);
-		macro_text = macro_pos = NULL;
+wchar_t	*pr, *s, *r;
+	if (!macro_pos)
+		return wget_wch(win, c);
+
+	if (!*macro_pos) {
+		input_macro(NULL);
+		return wget_wch(win, c);
 	}
 
-	return wget_wch(win, c);
+	if (macro_pos[0] != '$' || macro_pos[1] != '[') {
+		*c = *macro_pos++;
+		return 0;
+	}
+
+/* Handle $[prompt string] escapes */
+	pr = calloc(sizeof(wchar_t), wcslen(macro_pos) - 1);
+	for (r = pr, s = macro_pos + 2; ; s++) {
+		if (*s == '\0') {
+			cmderr(L"Unterminated $[ prompt in macro");
+			input_macro(NULL);
+			return wget_wch(win, c);
+		}
+
+		if (*s == ']')
+			break;
+
+		*r++ = *s;
+	}
+
+	s++;
+
+	macro_pos = NULL;
+	r = prompt(pr, NULL, NULL);
+	free(pr);
+
+	pr = calloc(sizeof(wchar_t), wcslen(r) + wcslen(s) + 1);
+	wcscpy(pr, r);
+	wcscat(pr, s);
+	free(macro_text);
+	macro_text = macro_pos = pr;
+	*c = *macro_pos++;
+	return 0;
 }

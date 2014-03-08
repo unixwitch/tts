@@ -49,7 +49,12 @@ bind k prev
 # string which will be executed as if it was typed.  For example, the
 # following macro would add a new entry called "test", and set its timer to
 # 30 minutes.
-#macro t "atest\n+30:00\n"
+#macro t "atest\n+30m\n"
+
+# Macros can also prompt for input from the user using $[Prompt string]; the
+# $[...] will be replaced with the user's input.  For example, this macro will
+# prompt for the name of a new entry, then set its duration to 30m:
+#macro t "a$[Description:]\n+30m\n"
 
 #### Styling
 #
