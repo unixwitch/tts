@@ -19,7 +19,7 @@ LIBS		= @LIBS@
 INSTALL		= @INSTALL@
 
 OBJS		= tts.o wide.o entry.o ui.o functions.o commands.o bindings.o \
-		  str.o style.o
+		  str.o style.o wcslcpy.o
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@

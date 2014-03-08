@@ -26,7 +26,7 @@ AC_PROG_INSTALL
 AX_WITH_CURSES
 oLIBS="$LIBS"
 LIBS="$LIBS $CURSES_LIB"
-AC_CHECK_FUNCS([use_default_colors])
+AC_CHECK_FUNCS([use_default_colors wcslcpy wcslcat])
 LIBS="$oLIBS"
 
 AC_CHECK_HEADERS([IOKit/pwr_mgt/IOPMLib.h])

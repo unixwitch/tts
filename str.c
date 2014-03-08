@@ -194,19 +194,19 @@ wchar_t	t[16];
 
 	if (tm >= (60 * 60)) {
 		swprintf(t, wsizeof(t), L"%dh", tm / (60 * 60));
-		wcslcat(res, t, sizeof(res));
+		wcslcat(res, t, wsizeof(res));
 		tm %= (60 * 60);
 	}
 
 	if (tm >= 60) {
 		swprintf(t, wsizeof(t), L"%dm", tm / 60);
-		wcslcat(res, t, sizeof(res));
+		wcslcat(res, t, wsizeof(res));
 		tm %= 60;
 	}
 
 	if (tm) {
 		swprintf(t, wsizeof(t), L"%ds", tm);
-		wcslcat(res, t, sizeof(res));
+		wcslcat(res, t, wsizeof(res));
 	}
 
 	return wcsdup(res);
