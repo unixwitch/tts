@@ -39,13 +39,13 @@ void kmerge(void);
 void kint(void);
 
 typedef struct function {
-	const WCHAR	*fn_name;
+	const wchar_t	*fn_name;
 	void		(*fn_hdl) (void);
-	const WCHAR	*fn_desc;
+	const wchar_t	*fn_desc;
 } function_t;
 
 extern function_t funcs[];
 
-function_t *find_func(const WCHAR *name);
+function_t *find_func(const wchar_t *name);
 
 #endif	/* !TTS_FUNCTIONS_H */

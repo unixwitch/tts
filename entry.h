@@ -17,7 +17,7 @@
 #include	"wide.h"
 
 typedef struct entry {
-	WCHAR			*en_desc;
+	wchar_t			*en_desc;
 	int			 en_secs;
 	time_t			 en_started;
 	time_t			 en_created;
@@ -37,7 +37,7 @@ extern entry_list entries;
 
 extern entry_t *running;
 
-entry_t	*entry_new		(const WCHAR *);
+entry_t	*entry_new		(const wchar_t *);
 void	 entry_start		(entry_t *);
 void	 entry_stop		(entry_t *);
 void	 entry_free		(entry_t *);

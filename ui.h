@@ -21,17 +21,18 @@ extern WINDOW *titwin, *statwin, *listwin;
 extern int in_curses;
 extern int showinv;
 
-void cursadvance(void);
+void	ui_init		(void);
 
-void drawstatus		(const WCHAR *msg, ...);
-void vdrawstatus	(const WCHAR *msg, va_list);
-void drawheader		(void);
-void drawentries	(void);
+void	cursadvance	(void);
+void	drawstatus	(const wchar_t *msg, ...);
+void	vdrawstatus	(const wchar_t *msg, va_list);
+void	drawheader	(void);
+void	drawentries	(void);
 
-WCHAR *prompt	(WCHAR const *, WCHAR const *, history_t *);
-int prduration	(WCHAR *prompt, int *h, int *m, int *s);
-int yesno	(WCHAR const *);
-void errbox	(WCHAR const *, ...);
-void verrbox	(WCHAR const *, va_list);
+wchar_t	*prompt		(wchar_t const *, wchar_t const *, history_t *);
+int	 prduration	(wchar_t *prompt, int *h, int *m, int *s);
+int	 yesno		(wchar_t const *);
+void	 errbox		(wchar_t const *, ...);
+void	 verrbox	(wchar_t const *, va_list);
 
 #endif	/* !TTS_UI_H */

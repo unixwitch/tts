@@ -12,12 +12,12 @@
 
 size_t
 tokenise(str, res)
-	const WCHAR	*str;
-	WCHAR		***res;
+	const wchar_t	*str;
+	wchar_t		***res;
 {
 int		 ntoks = 0;
-const WCHAR	*p, *q;
-WCHAR		*r;
+const wchar_t	*p, *q;
+wchar_t		*r;
 
 	*res = NULL;
 	p = str;
@@ -28,7 +28,7 @@ WCHAR		*r;
 	int		isbsl = 0;
 
 	/* Skip leading whitespace */
-		while (ISSPACE(*p))
+		while (iswspace(*p))
 			p++;
 
 	/* End of string - no more arguments */
@@ -64,21 +64,21 @@ WCHAR		*r;
 				qskip = 1;
 		} else {
 	/* Not quoted - just find the next whitespace */
-			while (!ISSPACE(*q) && *q)
+			while (!iswspace(*q) && *q)
 				q++;
 		}
 
 	/* Copy the argument (which is sz bytes long) into the result array */
 		sz = (q - p);
-		*res = realloc(*res, sizeof(WCHAR *) * (ntoks + 1));
-		(*res)[ntoks] = malloc(sizeof(WCHAR) * (sz + 1));
-		MEMCPY((*res)[ntoks], p, sz);
+		*res = realloc(*res, sizeof(wchar_t *) * (ntoks + 1));
+		(*res)[ntoks] = malloc(sizeof(wchar_t) * (sz + 1));
+		wmemcpy((*res)[ntoks], p, sz);
 
 	/* Handle \ escapes */
 		for (r = (*res)[ntoks]; r < ((*res)[ntoks] + sz);) {
 			if (!isbsl) {
 				if (*r == '\\') {
-					MEMMOVE(r, r + 1, sz - (r - (*res)[ntoks]));
+					wmemmove(r, r + 1, sz - (r - (*res)[ntoks]));
 					sz--;
 					isbsl = 1;
 					continue;
@@ -106,7 +106,7 @@ WCHAR		*r;
 		if (qskip)
 			q += qskip;
 
-		while (ISSPACE(*q))
+		while (iswspace(*q))
 			q++;
 
 	/*
@@ -118,16 +118,16 @@ WCHAR		*r;
 		p = q;
 	}
 
-	*res = realloc(*res, sizeof(WCHAR *) * (ntoks + 1));
+	*res = realloc(*res, sizeof(wchar_t *) * (ntoks + 1));
 	(*res)[ntoks] = NULL;
 	return ntoks;
 }
 
 void
 tokfree(vec)
-	WCHAR	***vec;
+	wchar_t	***vec;
 {
-WCHAR	**p;
+wchar_t	**p;
 	for (p = (*vec); *p; p++)
 		free(*p);
 	free(*vec);

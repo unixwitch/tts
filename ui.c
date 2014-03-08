@@ -18,6 +18,46 @@
 WINDOW *titwin, *statwin, *listwin;
 int in_curses;
 
+void
+ui_init(void)
+{
+	initscr();
+	in_curses = 1;
+	start_color();
+#ifdef HAVE_USE_DEFAULT_COLORS
+	use_default_colors();
+#endif
+	cbreak();
+	noecho();
+	nonl();
+	nodelay(stdscr, TRUE);
+
+	pair_content(0, &default_fg, &default_bg);
+
+	refresh();
+
+	intrflush(stdscr, TRUE);
+	keypad(stdscr, TRUE);
+	leaveok(stdscr, TRUE);
+
+	titwin = newwin(1, 0, 0, 0);
+	intrflush(titwin, FALSE);
+	keypad(titwin, TRUE);
+	leaveok(titwin, TRUE);
+
+	statwin = newwin(1, 0, LINES - 1, 0);
+	intrflush(statwin, FALSE);
+	keypad(statwin, TRUE);
+	leaveok(statwin, TRUE);
+
+	listwin = newwin(LINES - 2, 0, 1, 0);
+	intrflush(listwin, FALSE);
+	keypad(listwin, TRUE);
+	leaveok(listwin, TRUE);
+
+	curs_set(0);
+}
+
 /*
  * Move the cursor to the next entry after an operation like mark or deleted.
  * If there are no suitable entries after this one, move it backwards instead.
@@ -70,24 +110,24 @@ entry_t	*en;
 void
 drawheader()
 {
-WCHAR	title[64];
+wchar_t	title[64];
 
-	SNPRINTF(title, WSIZEOF(title), WIDE("TTS %s - Type '?' for help"),
+	swprintf(title, wsizeof(title), L"TTS %s - Type '?' for help",
 		 tts_version);
 	wmove(titwin, 0, 0);
-	WADDSTR(titwin, title);
+	waddwstr(titwin, title);
 
 	if (itime > 0) {
-	WCHAR	str[128];
+	wchar_t	str[128];
 	int	h, m, s;
 	time_t	passed = time(NULL) - itime;
 
 		time_to_hms(passed, h, m, s);
-		SNPRINTF(str, WSIZEOF(str), WIDE("  *** MARK INTERRUPT: %02d:%02d:%02d ***"),
+		swprintf(str, wsizeof(str), L"  *** MARK INTERRUPT: %02d:%02d:%02d ***",
 			h, m, s);
 
 		wattron(titwin, A_BOLD);
-		WADDSTR(titwin, str);
+		waddwstr(titwin, str);
 		wattroff(titwin, A_BOLD);
 	}
 	wclrtoeol(titwin);
@@ -96,21 +136,21 @@ WCHAR	title[64];
 
 void
 vdrawstatus(msg, ap)
-	const WCHAR	*msg;
+	const wchar_t	*msg;
 	va_list		 ap;
 {
-WCHAR	s[1024];
-	VSNPRINTF(s, WSIZEOF(s), msg, ap);
+wchar_t	s[1024];
+	vswprintf(s, wsizeof(s), msg, ap);
 
 	wmove(statwin, 0, 0);
-	WADDSTR(statwin, s);
+	waddwstr(statwin, s);
 	wclrtoeol(statwin);
 	wrefresh(statwin);
 	time(&laststatus);
 }
 
 void
-drawstatus(const WCHAR *msg, ...)
+drawstatus(const wchar_t *msg, ...)
 {
 va_list	ap;
 	va_start(ap, msg);
@@ -120,10 +160,10 @@ va_list	ap;
 
 int
 yesno(msg)
-	const WCHAR	*msg;
+	const wchar_t	*msg;
 {
 WINDOW	*pwin;
-INT	 c;
+wint_t	 c;
 
 	pwin = newwin(1, COLS, LINES - 1, 0);
 	keypad(pwin, TRUE);
@@ -133,8 +173,8 @@ INT	 c;
 	wbkgd(pwin, style_bg(sy_status));
 
 	wmove(pwin, 0, 0);
-	WADDSTR(pwin, msg);
-	WADDSTR(pwin, WIDE(" [y/N]? "));
+	waddwstr(pwin, msg);
+	waddwstr(pwin, L" [y/N]? ");
 	wattroff(pwin, A_BOLD);
 
 	while (input_char(&c) == ERR
@@ -151,13 +191,13 @@ INT	 c;
 	return (c == 'Y' || c == 'y') ? 1 : 0;
 }
 
-WCHAR *
+wchar_t *
 prompt(msg, def, hist)
-	const WCHAR	*msg, *def;
+	const wchar_t	*msg, *def;
 	history_t	*hist;
 {
 WINDOW		*pwin;
-WCHAR		 input[256];
+wchar_t		 input[256];
 size_t		 pos = 0;
 histent_t	*histpos = NULL;
 
@@ -166,8 +206,8 @@ histent_t	*histpos = NULL;
 
 	memset(input, 0, sizeof(input));
 	if (def) {
-		STRNCPY(input, def, WSIZEOF(input) - 1);
-		pos = STRLEN(input);
+		wcsncpy(input, def, wsizeof(input) - 1);
+		pos = wcslen(input);
 	}
 
 	pwin = newwin(1, COLS, LINES - 1, 0);
@@ -178,17 +218,17 @@ histent_t	*histpos = NULL;
 
 	wattron(pwin, A_BOLD);
 	wmove(pwin, 0, 0);
-	WADDSTR(pwin, msg);
+	waddwstr(pwin, msg);
 	wattroff(pwin, A_BOLD);
 
 	curs_set(1);
 
 	for (;;) {
-	INT	c;
-		wmove(pwin, 0, STRLEN(msg) + 1);
-		WADDSTR(pwin, input);
+	wint_t	c;
+		wmove(pwin, 0, wcslen(msg) + 1);
+		waddwstr(pwin, input);
 		wclrtoeol(pwin);
-		wmove(pwin, 0, STRLEN(msg) + 1 + pos);
+		wmove(pwin, 0, wcslen(msg) + 1 + pos);
 		wrefresh(pwin);
 
 		if (input_char(&c) == ERR)
@@ -203,21 +243,21 @@ histent_t	*histpos = NULL;
 		case 0x7F:
 		case 0x08:
 			if (pos) {
-				if (pos == STRLEN(input))
+				if (pos == wcslen(input))
 					input[--pos] = 0;
 				else {
-				int	i = STRLEN(input);
+				int	i = wcslen(input);
 					pos--;
-					MEMCPY(input + pos, input + pos + 1, STRLEN(input) - pos);
+					wmemcpy(input + pos, input + pos + 1, wcslen(input) - pos);
 					input[i] = 0;
 				}
 			}
 			break;
 
 		case KEY_DC:
-			if (pos < STRLEN(input)) {
-			int	i = STRLEN(input);
-				MEMCPY(input + pos, input + pos + 1, STRLEN(input) - pos);
+			if (pos < wcslen(input)) {
+			int	i = wcslen(input);
+				wmemcpy(input + pos, input + pos + 1, wcslen(input) - pos);
 				input[i] = 0;
 			}
 			break;
@@ -228,7 +268,7 @@ histent_t	*histpos = NULL;
 			break;
 
 		case KEY_RIGHT:
-			if (pos < STRLEN(input))
+			if (pos < wcslen(input))
 				pos++;
 			break;
 
@@ -239,7 +279,7 @@ histent_t	*histpos = NULL;
 
 		case KEY_END:
 		case 0x05:	/* ^E */
-			pos = STRLEN(input);
+			pos = wcslen(input);
 			break;
 
 		case 0x07:	/* ^G */
@@ -273,8 +313,8 @@ histent_t	*histpos = NULL;
 			}
 
 
-			STRNCPY(input, histpos->he_text, WSIZEOF(input) - 1);
-			pos = STRLEN(input);
+			wcsncpy(input, histpos->he_text, wsizeof(input) - 1);
+			pos = wcslen(input);
 			break;
 
 		case KEY_DOWN:
@@ -290,13 +330,13 @@ histent_t	*histpos = NULL;
 				histpos = TTS_TAILQ_NEXT(histpos, he_entries);
 
 
-			STRNCPY(input, histpos->he_text, WSIZEOF(input) - 1);
-			pos = STRLEN(input);
+			wcsncpy(input, histpos->he_text, wsizeof(input) - 1);
+			pos = wcslen(input);
 			break;
 
 		default:
-			if (pos != STRLEN(input)) {
-				MEMMOVE(input + pos + 1, input + pos, STRLEN(input) - pos);
+			if (pos != wcslen(input)) {
+				wmemmove(input + pos + 1, input + pos, wcslen(input) - pos);
 				input[pos++] = c;
 			} else {
 				input[pos++] = c;
@@ -313,11 +353,11 @@ end:	;
 	wtouchln(statwin, 0, 1, 1);
 	wrefresh(statwin);
 	hist_add(hist, input);
-	return STRDUP(input);
+	return wcsdup(input);
 }
 
 void
-errbox(const WCHAR *msg, ...)
+errbox(const wchar_t *msg, ...)
 {
 va_list	ap;
 	va_start(ap, msg);
@@ -327,19 +367,19 @@ va_list	ap;
 
 void
 verrbox(msg, ap)
-	const WCHAR	*msg;
+	const wchar_t	*msg;
 	va_list		 ap;
 {
-WCHAR	 text[4096];
+wchar_t	 text[4096];
 WINDOW	*ewin;
 
-#define ETITLE	WIDE(" Error ")
-#define ECONT	WIDE(" <OK> ")
+#define ETITLE	L" Error "
+#define ECONT	L" <OK> "
 int	width;
-INT	c;
+wint_t	c;
 
-	VSNPRINTF(text, WSIZEOF(text), msg, ap);
-	width = STRLEN(text);
+	vswprintf(text, wsizeof(text), msg, ap);
+	width = wcslen(text);
 
 	ewin = newwin(6, width + 4,
 			(LINES / 2) - ((1 + 2)/ 2),
@@ -348,19 +388,19 @@ INT	c;
 	wborder(ewin, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	wattron(ewin, A_REVERSE | A_BOLD);
-	wmove(ewin, 0, (width / 2) - (WSIZEOF(ETITLE) - 1)/2);
-	WADDSTR(ewin, ETITLE);
+	wmove(ewin, 0, (width / 2) - (wsizeof(ETITLE) - 1)/2);
+	waddwstr(ewin, ETITLE);
 	wattroff(ewin, A_REVERSE | A_BOLD);
 
 	wmove(ewin, 2, 2);
-	WADDSTR(ewin, text);
+	waddwstr(ewin, text);
 	wattron(ewin, A_REVERSE | A_BOLD);
-	wmove(ewin, 4, (width / 2) - ((WSIZEOF(ECONT) - 1) / 2));
-	WADDSTR(ewin, ECONT);
+	wmove(ewin, 4, (width / 2) - ((wsizeof(ECONT) - 1) / 2));
+	waddwstr(ewin, ECONT);
 	wattroff(ewin, A_REVERSE | A_BOLD);
 
 	for (;;) {
-		if (WGETCH(ewin, &c) == ERR)
+		if (wget_wch(ewin, &c) == ERR)
 			continue;
 		if (c == '\r')
 			break;
@@ -391,7 +431,7 @@ chtype	 oldbg;
 	for (; en; en = TTS_TAILQ_NEXT(en, en_entries)) {
 	time_t	 n;
 	int	 h, s, m;
-	WCHAR	 flags[10], stime[16], *p;
+	wchar_t	 flags[10], stime[16], *p;
 	attr_t	 attrs = WA_NORMAL;
 
 		if (!showinv && en->en_flags.efl_invoiced)
@@ -401,7 +441,7 @@ chtype	 oldbg;
 
 		if (lastday != entry_day(en)) {
 		struct tm	*lt;
-		WCHAR		 lbl[128];
+		wchar_t		 lbl[128];
 		time_t		 itime = entry_time_for_day(entry_day(en), 1, 0),
 				 ntime = entry_time_for_day(entry_day(en), 0, 0),
 				 btime = entry_time_for_day(entry_day(en), 2, bill_increment);
@@ -409,7 +449,7 @@ chtype	 oldbg;
 				 hn, mn, sn,
 				 hb, mb, sb,
 				 ht, mt, st;
-		WCHAR		 hdrtext[256];
+		wchar_t		 hdrtext[256];
 
 			time_to_hms(itime, hi, mi, si);
 			time_to_hms(ntime, hn, mn, sn);
@@ -432,24 +472,24 @@ chtype	 oldbg;
 			lastday = entry_day(en);
 			lt = localtime(&lastday);
 
-			STRFTIME(lbl, WSIZEOF(lbl), WIDE("%A, %d %B %Y"), lt);
+			wcsftime(lbl, wsizeof(lbl), L"%A, %d %B %Y", lt);
 			if (show_billable)
-				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
-					 WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
-					"N:%02d:%02d:%02d / T:%02d:%02d:%02d / "
-					"B:%02d:%02d:%02d]"),
-					lbl, hi, mi, si, hn, mn, sn, ht, mt, st,
-					hb, mb, sb);
+				swprintf(hdrtext, wsizeof(hdrtext),
+					 L"%-30ls [I:%02d:%02d:%02d / "
+					 L"N:%02d:%02d:%02d / T:%02d:%02d:%02d / "
+					 L"B:%02d:%02d:%02d]",
+					 lbl, hi, mi, si, hn, mn, sn, ht, mt, st,
+					 hb, mb, sb);
 			else
-				SNPRINTF(hdrtext, WSIZEOF(hdrtext),
-					WIDE("%-30"FMT_L"s [I:%02d:%02d:%02d / "
-					"N:%02d:%02d:%02d / T:%02d:%02d:%02d]"),
-					lbl, hi, mi, si, hn, mn, sn, ht, mt, st);
+				swprintf(hdrtext, wsizeof(hdrtext),
+					 L"%-30ls [I:%02d:%02d:%02d / "
+					 L"N:%02d:%02d:%02d / T:%02d:%02d:%02d]",
+					 lbl, hi, mi, si, hn, mn, sn, ht, mt, st);
 
 			wattr_on(listwin, style_fg(sy_date), NULL);
 			wbkgdset(listwin, style_bg(sy_date));
 			wmove(listwin, cline, 0);
-			WADDSTR(listwin, hdrtext);
+			waddwstr(listwin, hdrtext);
 			wclrtoeol(listwin);
 			wattr_off(listwin, style_fg(sy_date), NULL);
 			wbkgdset(listwin, oldbg);
@@ -494,9 +534,9 @@ chtype	 oldbg;
 		wattr_on(listwin, attrs, NULL);
 
 		if (en == curent) {
-			WADDSTR(listwin, WIDE("  -> "));
+			waddwstr(listwin, L"  -> ");
 		} else
-			WADDSTR(listwin, WIDE("     "));
+			waddwstr(listwin, L"     ");
 
 		n = en->en_secs;
 		if (en->en_started)
@@ -507,9 +547,9 @@ chtype	 oldbg;
 		n %= 60;
 		s = n;
 
-		SNPRINTF(stime, WSIZEOF(stime), WIDE("%02d:%02d:%02d%c "),
+		swprintf(stime, wsizeof(stime), L"%02d:%02d:%02d%c ",
 			h, m, s, (itime && (en == running)) ? '*' : ' ');
-		WADDSTR(listwin, stime);
+		waddwstr(listwin, stime);
 
 		memset(flags, 0, sizeof(flags));
 		p = flags;
@@ -535,13 +575,13 @@ chtype	 oldbg;
 			*p++ = ' ';
 
 		if (*flags) {
-		WCHAR	s[10];
-			SNPRINTF(s, WSIZEOF(s), WIDE("%-5"FMT_L"s  "), flags);
-			WADDSTR(listwin, s);
+		wchar_t	s[10];
+			swprintf(s, wsizeof(s), L"%-5ls  ", flags);
+			waddwstr(listwin, s);
 		} else
-			WADDSTR(listwin, WIDE("       "));
+			waddwstr(listwin, L"       ");
 
-		WADDSTR(listwin, en->en_desc);
+		waddwstr(listwin, en->en_desc);
 		wclrtoeol(listwin);
 		wbkgdset(listwin, oldbg);
 		wattr_off(listwin, attrs, NULL);
@@ -563,27 +603,27 @@ chtype	 oldbg;
 
 int
 prduration(pr, hh, mm, ss)
-	WCHAR	*pr;
+	wchar_t	*pr;
 	int	*hh, *mm, *ss;
 {
-WCHAR	*tstr;
+wchar_t	*tstr;
 int	 h, m, s;
-	if ((tstr = prompt(pr, WIDE("00:00:00"), NULL)) == NULL)
+	if ((tstr = prompt(pr, L"00:00:00", NULL)) == NULL)
 		return -1;
 
 	if (!*tstr) {
-		drawstatus(WIDE("No duration entered"));
+		drawstatus(L"No duration entered");
 		free(tstr);
 		return -1;
 	}
 
-	if (SSCANF(tstr, WIDE("%d:%d:%d"), &h, &m, &s) != 3) {
+	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
 		h = 0;
-		if (SSCANF(tstr, WIDE("%d:%d"), &m, &s) != 2) {
+		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
 			m = 0;
-			if (SSCANF(tstr, WIDE("%d"), &s) != 1) {
+			if (swscanf(tstr, L"%d", &s) != 1) {
 				free(tstr);
-				drawstatus(WIDE("Invalid time format."));
+				drawstatus(L"Invalid time format.");
 				return -1;
 			}
 		}
@@ -592,12 +632,12 @@ int	 h, m, s;
 	free(tstr);
 
 	if (m >= 60) {
-		drawstatus(WIDE("Minutes cannot be more than 59."));
+		drawstatus(L"Minutes cannot be more than 59.");
 		return -1;
 	}
 
 	if (s >= 60) {
-		drawstatus(WIDE("Seconds cannot be more than 59."));
+		drawstatus(L"Seconds cannot be more than 59.");
 		return -1;
 	}
 

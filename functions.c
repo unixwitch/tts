@@ -20,30 +20,30 @@
 #include	"str.h"
 
 function_t funcs[] = {
-	{ WIDE("help"),		khelp,		WIDE("display help screen") },
-	{ WIDE("add"),		kadd,		WIDE("add a new entry and start the timer") },
-	{ WIDE("add-old"),	kaddold,	WIDE("add a new entry and specify its duration") },
-	{ WIDE("delete"),	kmarkdel,	WIDE("delete the current entry") },
-	{ WIDE("undelete"),	kundel,		WIDE("undelete the current entry") },
-	{ WIDE("quit"),		kquit,		WIDE("exit TTS") },
-	{ WIDE("invoice"),	kinvoiced,	WIDE("toggle current entry as invoiced") },
-	{ WIDE("billable"),	kbillable,	WIDE("toggle current entry as billable") },
-	{ WIDE("mark"),		kmark,		WIDE("mark the current entry") },
-	{ WIDE("unmarkall"),	kunmarkall,	WIDE("unmark all entries") },
-	{ WIDE("startstop"),	ktoggle,	WIDE("start or stop the timer") },
-	{ WIDE("edit-desc"),	keddesc,	WIDE("edit the current entry's description") },
-	{ WIDE("edit-time"),	kedtime,	WIDE("edit the current entry's duration") },
-	{ WIDE("showhide-inv"),	ktoggleinv,	WIDE("show or hide invoiced entries") },
-	{ WIDE("copy"),		kcopy,		WIDE("copy the current entry's description to a new entry") },
-	{ WIDE("add-time"),	kaddtime,	WIDE("add time to the current entry") },
-	{ WIDE("sub-time"),	kdeltime,	WIDE("subtract time from the current entry") },
-	{ WIDE("search"),	ksearch,	WIDE("search for an entry by name") },
-	{ WIDE("sync"),		ksync,		WIDE("purge all deleted entries") },
-	{ WIDE("prev"),		kup,		WIDE("move to the previous entry") },
-	{ WIDE("next"),		kdown,		WIDE("move to the next entry") },
-	{ WIDE("execute"),	kexec,		WIDE("execute a configuration command") },
-	{ WIDE("merge"),	kmerge,		WIDE("merge marked entries into current entry") },
-	{ WIDE("interrupt"),	kint,		WIDE("split current entry into new entry")},
+	{ L"help",		khelp,		L"display help screen" },
+	{ L"add",		kadd,		L"add a new entry and start the timer" },
+	{ L"add-old",		kaddold,	L"add a new entry and specify its duration" },
+	{ L"delete",		kmarkdel,	L"delete the current entry" },
+	{ L"undelete",		kundel,		L"undelete the current entry" },
+	{ L"quit",		kquit,		L"exit TTS" },
+	{ L"invoice",		kinvoiced,	L"toggle current entry as invoiced" },
+	{ L"billable",		kbillable,	L"toggle current entry as billable" },
+	{ L"mark",		kmark,		L"mark the current entry" },
+	{ L"unmarkall",		kunmarkall,	L"unmark all entries" },
+	{ L"startstop",		ktoggle,	L"start or stop the timer" },
+	{ L"edit-desc",		keddesc,	L"edit the current entry's description" },
+	{ L"edit-time",		kedtime,	L"edit the current entry's duration" },
+	{ L"showhide-inv",	ktoggleinv,	L"show or hide invoiced entries" },
+	{ L"copy",		kcopy,		L"copy the current entry's description to a new entry" },
+	{ L"add-time",		kaddtime,	L"add time to the current entry" },
+	{ L"sub-time",		kdeltime,	L"subtract time from the current entry" },
+	{ L"search",		ksearch,	L"search for an entry by name" },
+	{ L"sync",		ksync,		L"purge all deleted entries" },
+	{ L"prev",		kup,		L"move to the previous entry" },
+	{ L"next",		kdown,		L"move to the next entry" },
+	{ L"execute",		kexec,		L"execute a configuration command" },
+	{ L"merge",		kmerge,		L"merge marked entries into current entry" },
+	{ L"interrupt",		kint,		L"split current entry into new entry"},
 	{ }
 };
 
@@ -59,8 +59,8 @@ int	 ndel = 0;
 	}
 
 	if (ndel) {
-	WCHAR	s[128];
-		SNPRINTF(s, WSIZEOF(s), WIDE("Purge %d deleted entries?"), ndel);
+	wchar_t	s[128];
+		swprintf(s, wsizeof(s), L"Purge %d deleted entries?", ndel);
 		if (yesno(s)) {
 			ksync();
 		}
@@ -72,9 +72,9 @@ int	 ndel = 0;
 void
 kadd()
 {
-WCHAR	*name;
+wchar_t	*name;
 entry_t	*en;
-	name = prompt(WIDE("Description:"), NULL, NULL);
+	name = prompt(L"Description:", NULL, NULL);
 	if (!name || !*name) {
 		free(name);
 		return;
@@ -88,9 +88,9 @@ entry_t	*en;
 void
 kaddold()
 {
-WCHAR	*name;
+wchar_t	*name;
 entry_t	*en;
-	name = prompt(WIDE("Description:"), NULL, NULL);
+	name = prompt(L"Description:", NULL, NULL);
 
 	if (!name || !*name) {
 		free(name);
@@ -151,7 +151,7 @@ int	 nmarked = 0;
 		return;
 
 	if (!curent) {
-		drawstatus(WIDE("No entries to delete."));
+		drawstatus(L"No entries to delete.");
 		return;
 	}
 
@@ -193,7 +193,7 @@ entry_t	*prev = curent;
 	} while (!showinv && prev->en_flags.efl_invoiced);
 
 	if (prev == NULL) {
-		drawstatus(WIDE("Already at first entry."));
+		drawstatus(L"Already at first entry.");
 		return;
 	}
 
@@ -215,7 +215,7 @@ entry_t	*next = curent;
 	} while (!showinv && next->en_flags.efl_invoiced);
 
 	if (next == NULL) {
-		drawstatus(WIDE("Already at last entry."));
+		drawstatus(L"Already at last entry.");
 		return;
 	}
 
@@ -244,7 +244,7 @@ int	 anymarked = 0;
 	}
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -300,7 +300,7 @@ int	 anymarked = 0;
 	}
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -314,14 +314,14 @@ int	 anymarked = 0;
 void
 keddesc()
 {
-WCHAR	*new;
+wchar_t	*new;
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
-	if ((new = prompt(WIDE("Description:"), curent->en_desc, NULL)) == NULL)
+	if ((new = prompt(L"Description:", curent->en_desc, NULL)) == NULL)
 		return;
 
 	free(curent->en_desc);
@@ -332,12 +332,12 @@ WCHAR	*new;
 void
 kedtime()
 {
-WCHAR	*new, old[64];
+wchar_t	*new, old[64];
 time_t	 n;
 int	 h, m, s;
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -350,13 +350,13 @@ int	 h, m, s;
 	n %= 60;
 	s = n;
 
-	SNPRINTF(old, WSIZEOF(old), WIDE("%02d:%02d:%02d"), h, m, s);
-	if ((new = prompt(WIDE("Duration [HH:MM:SS]:"), old, NULL)) == NULL)
+	swprintf(old, wsizeof(old), L"%02d:%02d:%02d", h, m, s);
+	if ((new = prompt(L"Duration [HH:MM:SS]:", old, NULL)) == NULL)
 		return;
 
-	if (!SSCANF(new, WIDE("%d:%d:%d"), &h, &m, &s)) {
+	if (!swscanf(new, L"%d:%d:%d", &h, &m, &s)) {
 		free(new);
-		drawstatus(WIDE("Invalid duration."));
+		drawstatus(L"Invalid duration.");
 	}
 
 	curent->en_secs = (h * 60 * 60) + (m * 60) + s;
@@ -371,8 +371,7 @@ ktoggleinv()
 {
 entry_t	*en = curent;
 	showinv = !showinv;
-	drawstatus(WIDE("%"FMT_L"s invoiced entries."),
-		showinv ? L"Showing" : L"Hiding");
+	drawstatus(L"%ls invoiced entries.", showinv ? L"Showing" : L"Hiding");
 
 	if (curent && !curent->en_flags.efl_invoiced)
 		return;
@@ -409,7 +408,7 @@ kcopy()
 entry_t	*en;
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -422,29 +421,29 @@ entry_t	*en;
 void
 kaddtime()
 {
-WCHAR	*tstr;
+wchar_t	*tstr;
 int	 h = 0, m = 0, s = 0, secs;
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
-	if ((tstr = prompt(WIDE("Time to add ([[HH:]MM:]SS):"), NULL, NULL)) == NULL)
+	if ((tstr = prompt(L"Time to add ([[HH:]MM:]SS):", NULL, NULL)) == NULL)
 		return;
 
 	if (!*tstr) {
-		drawstatus(WIDE(""));
+		drawstatus(L"");
 		free(tstr);
 		return;
 	}
 
-	if (SSCANF(tstr, WIDE("%d:%d:%d"), &h, &m, &s) != 3) {
+	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
 		h = 0;
-		if (SSCANF(tstr, WIDE("%d:%d"), &m, &s) != 2) {
+		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
 			m = 0;
-			if (SSCANF(tstr, WIDE("%d"), &s) != 1) {
+			if (swscanf(tstr, L"%d", &s) != 1) {
 				free(tstr);
-				drawstatus(WIDE("Invalid time format."));
+				drawstatus(L"Invalid time format.");
 				return;
 			}
 		}
@@ -453,12 +452,12 @@ int	 h = 0, m = 0, s = 0, secs;
 	free(tstr);
 
 	if (m >= 60) {
-		drawstatus(WIDE("Minutes cannot be more than 59."));
+		drawstatus(L"Minutes cannot be more than 59.");
 		return;
 	}
 
 	if (s >= 60) {
-		drawstatus(WIDE("Seconds cannot be more than 59."));
+		drawstatus(L"Seconds cannot be more than 59.");
 		return;
 	}
 
@@ -470,29 +469,29 @@ int	 h = 0, m = 0, s = 0, secs;
 void
 kdeltime()
 {
-WCHAR	*tstr;
+wchar_t	*tstr;
 int	 h = 0, m = 0, s = 0, secs;
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
-	if ((tstr = prompt(WIDE("Time to subtract, ([[HH:]MM:]SS):"), NULL, NULL)) == NULL)
+	if ((tstr = prompt(L"Time to subtract, ([[HH:]MM:]SS):", NULL, NULL)) == NULL)
 		return;
 
 	if (!*tstr) {
-		drawstatus(WIDE(""));
+		drawstatus(L"");
 		free(tstr);
 		return;
 	}
 
-	if (SSCANF(tstr, WIDE("%d:%d:%d"), &h, &m, &s) != 3) {
+	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
 		h = 0;
-		if (SSCANF(tstr, WIDE("%d:%d"), &m, &s) != 2) {
+		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
 			m = 0;
-			if (SSCANF(tstr, WIDE("%d"), &s) != 1) {
+			if (swscanf(tstr, L"%d", &s) != 1) {
 				free(tstr);
-				drawstatus(WIDE("Invalid time format."));
+				drawstatus(L"Invalid time format.");
 				return;
 			}
 		}
@@ -500,12 +499,12 @@ int	 h = 0, m = 0, s = 0, secs;
 
 	free(tstr);
 	if (m >= 60) {
-		drawstatus(WIDE("Minutes cannot be more than 59."));
+		drawstatus(L"Minutes cannot be more than 59.");
 		return;
 	}
 
 	if (s >= 60) {
-		drawstatus(WIDE("Seconds cannot be more than 59."));
+		drawstatus(L"Seconds cannot be more than 59.");
 		return;
 	}
 
@@ -513,7 +512,7 @@ int	 h = 0, m = 0, s = 0, secs;
 
 	secs = s + m*60 + h*60*60;
 	if (curent->en_secs - secs < 0) {
-		drawstatus(WIDE("Remaining time cannot be less than zero."));
+		drawstatus(L"Remaining time cannot be less than zero.");
 		return;
 	}
 
@@ -526,11 +525,11 @@ kmerge()
 {
 entry_t	*en, *ten;
 int	 nmarked = 0;
-WCHAR	 pr[128];
+wchar_t	 pr[128];
 int	 h, m, s = 0;
 
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -547,7 +546,7 @@ int	 h, m, s = 0;
 	}
 
 	if (nmarked == 0) {
-		drawstatus(WIDE("No marked entries."));
+		drawstatus(L"No marked entries.");
 		return;
 	}
 
@@ -556,7 +555,7 @@ int	 h, m, s = 0;
 	m = s / 60;
 	s %= 60;
 
-	SNPRINTF(pr, WSIZEOF(pr), WIDE("Merge %d marked entries [%02d:%02d:%02d] into current entry?"),
+	swprintf(pr, wsizeof(pr), L"Merge %d marked entries [%02d:%02d:%02d] into current entry?",
 			nmarked, h, m, s);
 	if (!yesno(pr))
 		return;
@@ -578,35 +577,35 @@ khelp()
 {
 WINDOW		*hwin;
 size_t		 nhelp = 0;
-WCHAR		**help;
-#define HTITLE	WIDE(" TTS keys ")
+wchar_t		**help;
+#define HTITLE	L" TTS keys "
 size_t		 width = 0;
 size_t		 i;
-INT		 c;
+wint_t		 c;
 binding_t	*bi;
 
 	/* Count the number of bindings */
 	TTS_TAILQ_FOREACH(bi, &bindings, bi_entries)
 		nhelp++;
-	help = calloc(nhelp, sizeof(const WCHAR *));
+	help = calloc(nhelp, sizeof(const wchar_t *));
 
 	i = 0;
 	TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
-	WCHAR	s[128], t[16];
+	wchar_t	s[128], t[16];
 
 		if (bi->bi_key)
-			SNPRINTF(t, WSIZEOF(t), WIDE("%"FMT_L"s"), bi->bi_key->ky_name);
+			swprintf(t, wsizeof(t), L"%ls", bi->bi_key->ky_name);
 		else
-			SNPRINTF(t, WSIZEOF(t), WIDE("%"FMT_L"c"), bi->bi_code);
+			swprintf(t, wsizeof(t), L"%lc", bi->bi_code);
 
 		if (bi->bi_macro)
-			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s execute macro: %"FMT_L"s"),
+			swprintf(s, wsizeof(s), L"%-10ls execute macro: %ls",
 				t, bi->bi_macro);
 		else
-			SNPRINTF(s, WSIZEOF(s), WIDE("%-10"FMT_L"s %"FMT_L"s (%"FMT_L"s)"),
+			swprintf(s, wsizeof(s), L"%-10ls %ls (%ls)",
 				t, bi->bi_func->fn_desc, bi->bi_func->fn_name);
 
-		help[i] = STRDUP(s);
+		help[i] = wcsdup(s);
 		i++;
 	}
 
@@ -614,8 +613,8 @@ binding_t	*bi;
 		nhelp = LINES - 6;
 
 	for (i = 0; i < nhelp; i++)
-		if (STRLEN(help[i]) > width)
-			width = STRLEN(help[i]);
+		if (wcslen(help[i]) > width)
+			width = wcslen(help[i]);
 
 	hwin = newwin(nhelp + 4, width + 4,
 			(LINES / 2) - ((nhelp + 2) / 2),
@@ -623,18 +622,18 @@ binding_t	*bi;
 	wborder(hwin, 0, 0, 0, 0, 0, 0, 0, 0);
 
 	wattron(hwin, A_REVERSE | A_BOLD);
-	wmove(hwin, 0, (width / 2) - (WSIZEOF(HTITLE) - 1)/2);
-	WADDSTR(hwin, HTITLE);
+	wmove(hwin, 0, (width / 2) - (wsizeof(HTITLE) - 1)/2);
+	waddwstr(hwin, HTITLE);
 	wattroff(hwin, A_REVERSE | A_BOLD);
 
 	for (i = 0; i < nhelp; i++) {
 		wmove(hwin, i + 2, 2);
-		WADDSTR(hwin, help[i]);
+		waddwstr(hwin, help[i]);
 	}
 
 	wrefresh(hwin);
 
-	while (WGETCH(hwin, &c) == ERR
+	while (wget_wch(hwin, &c) == ERR
 #ifdef KEY_RESIZE
 				|| (c == KEY_RESIZE)
 #endif
@@ -652,7 +651,7 @@ void
 kmark()
 {
 	if (!curent) {
-		drawstatus(WIDE("No entry selected."));
+		drawstatus(L"No entry selected.");
 		return;
 	}
 
@@ -675,11 +674,11 @@ kint()
 {
 time_t	 duration;
 entry_t	*en;
-WCHAR	*name;
+wchar_t	*name;
 
 	if (!itime) {
 		if (!running) {
-			drawstatus(WIDE("No running entry."));
+			drawstatus(L"No running entry.");
 			return;
 		}
 
@@ -688,11 +687,11 @@ WCHAR	*name;
 	}
 
 	if (!running) {
-		drawstatus(WIDE("No running entry."));
+		drawstatus(L"No running entry.");
 		return;
 	}
 
-	name = prompt(WIDE("Description:"), NULL, NULL);
+	name = prompt(L"Description:", NULL, NULL);
 
 	if (!name || !*name) {
 		itime = 0;
@@ -704,7 +703,7 @@ WCHAR	*name;
 		duration = time(NULL) - itime;
 	} else {
 	int	 h, m, s;
-		if (prduration(WIDE("Duration [HH:MM:SS]:"), &h, &m, &s) == -1)
+		if (prduration(L"Duration [HH:MM:SS]:", &h, &m, &s) == -1)
 			return;
 
 		duration = (h * 60 * 60) + (m * 60) + s;
@@ -726,16 +725,16 @@ WCHAR	*name;
 void
 ksearch()
 {
-static WCHAR	*lastsearch;
-WCHAR		*term;
+static wchar_t	*lastsearch;
+wchar_t		*term;
 entry_t		*start, *cur;
 
 	if (!curent) {
-		drawstatus(WIDE("No entries."));
+		drawstatus(L"No entries.");
 		return;
 	}
 
-	if ((term = prompt(WIDE("Search:"), NULL, NULL)) == NULL)
+	if ((term = prompt(L"Search:", NULL, NULL)) == NULL)
 		return;
 
 	if (!*term) {
@@ -754,16 +753,16 @@ entry_t		*start, *cur;
 	for (;;) {
 		cur = TTS_TAILQ_NEXT(cur, en_entries);
 		if (cur == NULL) {
-			drawstatus(WIDE("Search reached last entry, continuing from top."));
+			drawstatus(L"Search reached last entry, continuing from top.");
 			cur = TTS_TAILQ_FIRST(&entries);
 		}
 
 		if (cur == start) {
-			drawstatus(WIDE("No matches."));
+			drawstatus(L"No matches.");
 			break;
 		}
 
-		if (STRSTR(cur->en_desc, term)) {
+		if (wcsstr(cur->en_desc, term)) {
 			curent = cur;
 			if (!showinv && cur->en_flags.efl_invoiced)
 				showinv = 1;
@@ -776,12 +775,12 @@ entry_t		*start, *cur;
 void
 kexec()
 {
-WCHAR		*cmd;
-WCHAR		**args;
+wchar_t		*cmd;
+wchar_t		**args;
 command_t	*cmds;
 size_t		nargs;
 
-	if ((cmd = prompt(WIDE(":"), NULL, NULL)) == NULL || !*cmd) {
+	if ((cmd = prompt(L":", NULL, NULL)) == NULL || !*cmd) {
 		free(cmd);
 		return;
 	}
@@ -795,7 +794,7 @@ size_t		nargs;
 	}
 
 	if ((cmds = find_command(args[0])) == NULL) {
-		drawstatus(WIDE("Unknown command."));
+		drawstatus(L"Unknown command.");
 		tokfree(&args);
 		return;
 	}
@@ -810,11 +809,11 @@ size_t		nargs;
  */
 function_t *
 find_func(name)
-	const WCHAR	*name;
+	const wchar_t	*name;
 {
 function_t	*f;
 	for (f = funcs; f->fn_name; f++)
-		if (STRCMP(name, f->fn_name) == 0)
+		if (wcscmp(name, f->fn_name) == 0)
 			return f;
 	return NULL;
 }

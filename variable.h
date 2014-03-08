@@ -14,7 +14,7 @@
 #include	"wide.h"
 
 typedef struct variable {
-	WCHAR const	*va_name;
+	wchar_t const	*va_name;
 	int		 va_type;
 	void		*va_addr;
 } variable_t;
@@ -23,6 +23,6 @@ typedef struct variable {
 #define VTYPE_BOOL	2
 #define VTYPE_STRING	3
 
-variable_t	*find_variable(const WCHAR *name);
+variable_t	*find_variable(const wchar_t *name);
 
 #endif	/* !TTS_VARIABLE_H */

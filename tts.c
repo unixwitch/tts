@@ -82,7 +82,7 @@ entry_t *curent;
 
 int showinv = 0;
 
-static WCHAR *macro_text, *macro_pos;
+static wchar_t *macro_text, *macro_pos;
 
 time_t itime = 0;
 
@@ -91,15 +91,15 @@ int delete_advance = 1;
 int mark_advance = 1;
 int bill_advance = 0;
 int bill_increment = 0;
-WCHAR *auto_nonbillable;
+wchar_t *auto_nonbillable;
 
 variable_t variables[] = {
-	{ WIDE("delete_advance"),	VTYPE_BOOL,	&delete_advance },
-	{ WIDE("mark_advance"),		VTYPE_BOOL,	&mark_advance },
-	{ WIDE("billable_advance"),	VTYPE_BOOL,	&bill_advance },
-	{ WIDE("show_billable"),	VTYPE_BOOL,	&show_billable },
-	{ WIDE("auto_non_billable"),	VTYPE_STRING,	&auto_nonbillable },
-	{ WIDE("bill_increment"),	VTYPE_INT,	&bill_increment },
+	{ L"delete_advance",	VTYPE_BOOL,	&delete_advance },
+	{ L"mark_advance",	VTYPE_BOOL,	&mark_advance },
+	{ L"billable_advance",	VTYPE_BOOL,	&bill_advance },
+	{ L"show_billable",	VTYPE_BOOL,	&show_billable },
+	{ L"auto_non_billable",	VTYPE_STRING,	&auto_nonbillable },
+	{ L"bill_increment",	VTYPE_INT,	&bill_increment },
 	{ }
 };
 
@@ -242,88 +242,15 @@ struct kevent	 evs[2], rev;
 	snprintf(statfile, sizeof(statfile), "%s/%s", pw->pw_dir, STATFILE);
 	snprintf(rcfile, sizeof(rcfile), "%s/%s", pw->pw_dir, RCFILE);
 
-	initscr();
-	in_curses = 1;
-	start_color();
-#ifdef HAVE_USE_DEFAULT_COLORS
-	use_default_colors();
-#endif
-	cbreak();
-	noecho();
-	nonl();
-	nodelay(stdscr, TRUE);
-
-	pair_content(0, &default_fg, &default_bg);
-
-	refresh();
-
-	intrflush(stdscr, TRUE);
-	keypad(stdscr, TRUE);
-	leaveok(stdscr, TRUE);
-
-	titwin = newwin(1, 0, 0, 0);
-	intrflush(titwin, FALSE);
-	keypad(titwin, TRUE);
-	leaveok(titwin, TRUE);
-
-	statwin = newwin(1, 0, LINES - 1, 0);
-	intrflush(statwin, FALSE);
-	keypad(statwin, TRUE);
-	leaveok(statwin, TRUE);
-
-	listwin = newwin(LINES - 2, 0, 1, 0);
-	intrflush(listwin, FALSE);
-	keypad(listwin, TRUE);
-	leaveok(listwin, TRUE);
-
-	init_pair(1, default_fg, default_bg);
-	init_pair(2, default_fg, default_bg);
-	init_pair(3, default_fg, default_bg);
-	init_pair(4, default_fg, default_bg);
-	init_pair(5, default_fg, default_bg);
-	init_pair(6, default_fg, default_bg);
-
-	style_set(&sy_header, WIDE("reverse"), NULL);
-	style_set(&sy_status, WIDE("normal"), NULL);
-	style_set(&sy_entry, WIDE("normal"), NULL);
-	style_set(&sy_selected, WIDE("normal"), NULL);
-	style_set(&sy_running, WIDE("bold"), NULL);
-	style_set(&sy_date, WIDE("underline"), NULL);
-	apply_styles();
+	ui_init();
+	style_defaults();
 
 	if (load_file(rcfile) == -1) {
 		endwin();
 		return 1;
 	}
 
-	curs_set(0);
-
-	bind_key(WIDE("?"),		WIDE("help"), 0);
-	bind_key(WIDE("a"),		WIDE("add"), 0);
-	bind_key(WIDE("A"),		WIDE("add-old"), 0);
-	bind_key(WIDE("d"),		WIDE("delete"), 0);
-	bind_key(WIDE("u"),		WIDE("undelete"), 0);
-	bind_key(WIDE("q"),		WIDE("quit"), 0);
-	bind_key(WIDE("<CTRL-C>"),	WIDE("quit"), 0);
-	bind_key(WIDE("i"),		WIDE("invoice"), 0);
-	bind_key(WIDE("b"),		WIDE("billable"), 0);
-	bind_key(WIDE("m"),		WIDE("mark"), 0);
-	bind_key(WIDE("U"),		WIDE("unmarkall"), 0);
-	bind_key(WIDE("<SPACE>"),	WIDE("startstop"), 0);
-	bind_key(WIDE("e"),		WIDE("edit-desc"), 0);
-	bind_key(WIDE("\\"),		WIDE("edit-time"), 0);
-	bind_key(WIDE("<TAB>"),		WIDE("showhide-inv"), 0);
-	bind_key(WIDE("c"),		WIDE("copy"), 0);
-	bind_key(WIDE("+"),		WIDE("add-time"), 0);
-	bind_key(WIDE("-"),		WIDE("sub-time"), 0);
-	bind_key(WIDE("/"),		WIDE("search"), 0);
-	bind_key(WIDE("$"),		WIDE("sync"), 0);
-	bind_key(WIDE("<UP>"),		WIDE("prev"), 0);
-	bind_key(WIDE("<DOWN>"),	WIDE("next"), 0);
-	bind_key(WIDE(":"),		WIDE("execute"), 0);
-	bind_key(WIDE("M"),		WIDE("merge"), 0);
-	bind_key(WIDE("r"),		WIDE("interrupt"), 0);
-	bind_key(WIDE("R"),		WIDE("interrupt"), 0);
+	bind_defaults();
 
 	/*
 	 * Make sure we can save (even if it's an empty file or nothing has
@@ -333,7 +260,7 @@ struct kevent	 evs[2], rev;
 	save();
 
 	drawheader();
-	drawstatus(WIDE(""));
+	drawstatus(L"");
 
 	if (!TTS_TAILQ_EMPTY(&entries)) {
 		curent = TTS_TAILQ_FIRST(&entries);
@@ -343,7 +270,7 @@ struct kevent	 evs[2], rev;
 	}
 
 	for (;;) {
-	INT		 c;
+	wint_t		 c;
 	binding_t	*bi;
 #ifdef	USE_DARWIN_POWER
 	struct timespec	 timeout;
@@ -399,7 +326,7 @@ struct kevent	 evs[2], rev;
 				continue;
 #endif
 
-			drawstatus(WIDE(""));
+			drawstatus(L"");
 
 			TTS_TAILQ_FOREACH(bi, &bindings, bi_entries) {
 				if (bi->bi_code != c)
@@ -413,7 +340,7 @@ struct kevent	 evs[2], rev;
 				goto next;
 			}
 
-			drawstatus(WIDE("Unknown command."));
+			drawstatus(L"Unknown command.");
 		next:	;
 		}
 
@@ -421,7 +348,7 @@ struct kevent	 evs[2], rev;
 			break;
 
 		if (time(NULL) - laststatus >= 2)
-			drawstatus(WIDE(""));
+			drawstatus(L"");
 
 		if (time(NULL) - lastsave > 60)
 			save();
@@ -437,7 +364,7 @@ load()
 {
 FILE	*f;
 char	 input[4096];
-WCHAR	 line[4096];
+wchar_t	 line[4096];
 entry_t	*en;
 
 	TTS_TAILQ_FOREACH(en, &entries, en_entries)
@@ -447,40 +374,40 @@ entry_t	*en;
 		if (errno == ENOENT)
 			return 0;
 
-		errbox(WIDE("Can't read %s: %s"), statfile, strerror(errno));
+		errbox(L"Can't read %s: %s", statfile, strerror(errno));
 		exit(1);
 	}
 
 	if (fgets(input, sizeof(input), f) == NULL) {
-		errbox(WIDE("Can't read %s: %s"), statfile, strerror(errno));
+		errbox(L"Can't read %s: %s", statfile, strerror(errno));
 		fclose(f);
 		exit(1);
 	}
 
-	MBSTOWCS(line, input, WSIZEOF(line));
+	mbstowcs(line, input, wsizeof(line));
 
-	if (STRCMP(line, WIDE("#%RT/TTS V1\n"))) {
-		errbox(WIDE("Can't read %s: invalid magic signature"), statfile);
+	if (wcscmp(line, L"#%RT/TTS V1\n")) {
+		errbox(L"Can't read %s: invalid magic signature", statfile);
 		fclose(f);
 		exit(1);
 	}
 
 	while (fgets(input, sizeof(input), f)) {
 	unsigned long	 cre, secs;
-	WCHAR	 	 flags[10], desc[4096], *p;
+	wchar_t	 	 flags[10], desc[4096], *p;
 	entry_t		*en;
 	int		 i;
 
-		MBSTOWCS(line, input, WSIZEOF(line));
+		mbstowcs(line, input, wsizeof(line));
 
-		if (SSCANF(line, WIDE("#%%showinv %d\n"), &i) == 1) {
+		if (swscanf(line, L"#%%showinv %d\n", &i) == 1) {
 			showinv = i ? 1 : 0;
 			continue;
 		}
 
-		if (SSCANF(line, WIDE("%lu %lu %9"FMT_L"[in-] %4095"FMT_L"[^\n]\n"),
+		if (swscanf(line, L"%lu %lu %9l[in-] %4095l[^\n]\n",
 				&cre, &secs, flags, desc) != 4) {
-			errbox(WIDE("Can't read %s: invalid entry format"), statfile);
+			errbox(L"Can't read %s: invalid entry format", statfile);
 			fclose(f);
 			exit(1);
 		}
@@ -502,7 +429,7 @@ entry_t	*en;
 				break;
 
 			default:
-				errbox(WIDE("Can't read %s: invalid flag"), statfile);
+				errbox(L"Can't read %s: invalid flag", statfile);
 				fclose(f);
 				exit(1);
 			}
@@ -510,7 +437,7 @@ entry_t	*en;
 	}
 
 	if (ferror(f)) {
-		errbox(WIDE("Can't read %s: %s"), statfile, strerror(errno));
+		errbox(L"Can't read %s: %s", statfile, strerror(errno));
 		fclose(f);
 		exit(1);
 	}
@@ -530,31 +457,31 @@ entry_t	*en;
 	snprintf(p, sizeof(p), "%s_", statfile);
 
 	if ((fd = open(p, O_WRONLY | O_CREAT, 0600)) == -1) {
-		errbox(WIDE("%s_: %s"), statfile, strerror(errno));
+		errbox(L"%s_: %s", statfile, strerror(errno));
 		endwin();
 		exit(1);
 	}
 
 	if ((f = fdopen(fd, "w")) == NULL) {
-		errbox(WIDE("%s: %s"), p, strerror(errno));
+		errbox(L"%s: %s", p, strerror(errno));
 		endwin();
 		exit(1);
 	}
 
-	if (FPRINTF(f, WIDE("#%%RT/TTS V1\n")) == -1) {
+	if (fwprintf(f, L"#%%RT/TTS V1\n") == -1) {
 		fclose(f);
 		unlink(p);
 
-		errbox(WIDE("%s: write error (header): %s"), p, strerror(errno));
+		errbox(L"%s: write error (header): %s", p, strerror(errno));
 		endwin();
 		exit(1);
 	}
 
-	if (FPRINTF(f, WIDE("#%%showinv %d\n"), showinv) == -1) {
+	if (fwprintf(f, L"#%%showinv %d\n", showinv) == -1) {
 		fclose(f);
 		unlink(p);
 
-		errbox(WIDE("%s: write error (showinv): %s"), p, strerror(errno));
+		errbox(L"%s: write error (showinv): %s", p, strerror(errno));
 		endwin();
 		exit(1);
 	}
@@ -563,7 +490,7 @@ entry_t	*en;
 	char	 flags[10], *fp = flags, wdesc[4096] = {};
 	time_t	 n;
 
-		WCSTOMBS(wdesc, en->en_desc, sizeof(wdesc));
+		wcstombs(wdesc, en->en_desc, sizeof(wdesc));
 
 		memset(flags, 0, sizeof(flags));
 		if (en->en_flags.efl_invoiced)
@@ -575,11 +502,11 @@ entry_t	*en;
 		if (en->en_started)
 			n += time(NULL) - en->en_started;
 
-		if (FPRINTF(f, WIDE("%lu %lu %s %s\n"),
+		if (fwprintf(f, L"%lu %lu %s %s\n",
 				(unsigned long) en->en_created,
 				(unsigned long) n,
 				*flags ? flags : "-", wdesc) == -1) {
-			errbox(WIDE("%s: write error (entry): %s"), p, strerror(errno));
+			errbox(L"%s: write error (entry): %s", p, strerror(errno));
 			fclose(f);
 			unlink(p);
 			endwin();
@@ -589,14 +516,14 @@ entry_t	*en;
 
 	if (fclose(f) == EOF) {
 		unlink(p);
-		errbox(WIDE("%s: write error (closing): %s"), p, strerror(errno));
+		errbox(L"%s: write error (closing): %s", p, strerror(errno));
 		endwin();
 		exit(1);
 	}
 
 	if (rename(p, statfile) == -1) {
 		unlink(p);
-		errbox(WIDE("%s: rename: %s"), statfile, strerror(errno));
+		errbox(L"%s: rename: %s", statfile, strerror(errno));
 		endwin();
 		exit(1);
 	}
@@ -618,7 +545,7 @@ history_t	*hi;
 void
 hist_add(hi, text)
 	history_t	*hi;
-	const WCHAR	*text;
+	const wchar_t	*text;
 {
 histent_t	*hent;
 
@@ -628,7 +555,7 @@ histent_t	*hent;
 	if ((hent = calloc(1, sizeof(*hent))) == NULL)
 		return;
 
-	if ((hent->he_text = STRDUP(text)) == NULL) {
+	if ((hent->he_text = wcsdup(text)) == NULL) {
 		free(hent);
 		return;
 	}
@@ -643,11 +570,11 @@ histent_t	*hent;
 
 variable_t *
 find_variable(name)
-	WCHAR const	*name;
+	wchar_t const	*name;
 {
 variable_t	*v;
 	for (v = variables; v->va_name; v++)
-		if (STRCMP(name, v->va_name) == 0)
+		if (wcscmp(name, v->va_name) == 0)
 			return v;
 	return NULL;
 }
@@ -656,7 +583,7 @@ static char *curfile;
 static int lineno, nerr;
 
 void
-cmderr(const WCHAR *msg, ...)
+cmderr(const wchar_t *msg, ...)
 {
 va_list	ap;
 
@@ -667,16 +594,16 @@ va_list	ap;
 
 void
 vcmderr(msg, ap)
-	const WCHAR	*msg;
+	const wchar_t	*msg;
 	va_list		 ap;
 {
 	nerr++;
 
 	if (curfile) {
-	WCHAR	s[1024];
+	wchar_t	s[1024];
 	char	t[1024];
-		VSNPRINTF(s, WSIZEOF(t), msg, ap);
-		WCSTOMBS(t, s, sizeof(t));
+		vswprintf(s, wsizeof(t), msg, ap);
+		wcstombs(t, s, sizeof(t));
 
 		if (in_curses) {
 			endwin();
@@ -718,13 +645,13 @@ char	 input[1024];
 
 	while (fgets(input, sizeof(input), s)) {
 	size_t		nargs;
-	WCHAR		**args;
+	wchar_t		**args;
 	command_t	*cmds;
-	WCHAR		 line[1024];
+	wchar_t		 line[1024];
 
 		++lineno;
 
-		MBSTOWCS(line, input, WSIZEOF(line));
+		mbstowcs(line, input, wsizeof(line));
 
 		if (line[0] == '#')
 			continue;
@@ -736,7 +663,7 @@ char	 input[1024];
 		}
 
 		if ((cmds = find_command(args[0])) == NULL) {
-			cmderr(WIDE("Unknown command \"%"FMT_L"s\"."), args[0]);
+			cmderr(L"Unknown command \"%ls\".", args[0]);
 			nerr++;
 			tokfree(&args);
 			continue;
@@ -766,7 +693,7 @@ prompt_sleep(sleeptime)
  * subtract the time spent sleeping, in case they forgot to turn off
  * the timer.
  */
-WCHAR	 pr[128];
+wchar_t	 pr[128];
 int	 h, m, s = 0;
 
 /* Only prompt if an entry is running */
@@ -781,8 +708,8 @@ int	 h, m, s = 0;
 	m = s / 60;
 	s %= 60;
 
-	SNPRINTF(pr, WSIZEOF(pr),
-		 WIDE("Remove %02d:%02d:%02d time asleep from running entry?"),
+	swprintf(pr, wsizeof(pr),
+		 L"Remove %02d:%02d:%02d time asleep from running entry?",
 		 h, m, s);
 
 	if (!yesno(pr))
@@ -798,7 +725,7 @@ int	 h, m, s = 0;
 
 void
 input_macro(s)
-	WCHAR	*s;
+	wchar_t	*s;
 {
 	free(macro_text);
 	macro_text = macro_pos = NULL;
@@ -806,12 +733,12 @@ input_macro(s)
 	if (!s)
 		return;
 
-	macro_text = macro_pos = STRDUP(s);
+	macro_text = macro_pos = wcsdup(s);
 }
 
 int
 input_char(c)
-	WCHAR	*c;
+	wchar_t	*c;
 {
 	if (macro_pos) {
 		if (*macro_pos) {
@@ -822,5 +749,5 @@ input_char(c)
 		macro_text = macro_pos = NULL;
 	}
 
-	return GETCH(c);
+	return get_wch(c);
 }

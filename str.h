@@ -15,7 +15,7 @@
 
 #include	"wide.h"
 
-size_t tokenise(const WCHAR *, WCHAR ***result);
-void tokfree(WCHAR ***);
+size_t tokenise(const wchar_t *, wchar_t ***result);
+void tokfree(wchar_t ***);
 
 #endif	/* !TTS_STR_H */

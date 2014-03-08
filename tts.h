@@ -29,7 +29,7 @@ extern int delete_advance;
 extern int mark_advance;
 extern int bill_advance;
 extern int bill_increment;
-extern WCHAR *auto_nonbillable;
+extern wchar_t *auto_nonbillable;
 
 /*
  * Global state.
@@ -49,7 +49,7 @@ int save(void);
 
 #define NHIST 50
 typedef struct histent {
-	WCHAR			*he_text;
+	wchar_t			*he_text;
 	TTS_TAILQ_ENTRY(histent)	 he_entries;
 } histent_t;
 typedef TTS_TAILQ_HEAD(hentlist, histent) hentlist_t;
@@ -60,7 +60,7 @@ typedef struct history {
 } history_t;
 
 history_t	*hist_new(void);
-void		 hist_add(history_t *, WCHAR const *);
+void		 hist_add(history_t *, wchar_t const *);
 
 extern history_t *searchhist;
 extern history_t *prompthist;

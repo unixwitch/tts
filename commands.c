@@ -14,20 +14,20 @@
 #include	"variable.h"
 
 static command_t commands[] = {
-	{ WIDE("bind"),		c_bind	},
-	{ WIDE("macro"),	c_macro	},
-	{ WIDE("style"),	c_style	},
-	{ WIDE("set"),		c_set },
+	{ L"bind",	c_bind	},
+	{ L"macro",	c_macro	},
+	{ L"style",	c_style	},
+	{ L"set",	c_set },
 	{ }
 };
 
 command_t *
 find_command(name)
-	const WCHAR	*name;
+	const wchar_t	*name;
 {
 size_t	i;
 	for (i = 0; i < sizeof(commands) / sizeof(*commands); i++)
-		if (STRCMP(name, commands[i].cm_name) == 0)
+		if (wcscmp(name, commands[i].cm_name) == 0)
 			return &commands[i];
 	return NULL;
 }
@@ -35,36 +35,36 @@ size_t	i;
 void
 c_style(argc, argv)
 	size_t	argc;
-	WCHAR	**argv;
+	wchar_t	**argv;
 {
 style_t	*sy;
-WCHAR	*last, *tok;
+wchar_t	*last, *tok;
 
 	if (argc < 3 || argc > 4) {
-		cmderr(WIDE("Usage: style <item> <foreground> [background]"));
+		cmderr(L"Usage: style <item> <foreground> [background]");
 		return;
 	}
 
-	if (STRCMP(argv[1], WIDE("header")) == 0)
+	if (wcscmp(argv[1], L"header") == 0)
 		sy = &sy_header;
-	else if (STRCMP(argv[1], WIDE("status")) == 0)
+	else if (wcscmp(argv[1], L"status") == 0)
 		sy = &sy_status;
-	else if (STRCMP(argv[1], WIDE("entry")) == 0)
+	else if (wcscmp(argv[1], L"entry") == 0)
 		sy = &sy_entry;
-	else if (STRCMP(argv[1], WIDE("selected")) == 0)
+	else if (wcscmp(argv[1], L"selected") == 0)
 		sy = &sy_selected;
-	else if (STRCMP(argv[1], WIDE("running")) == 0)
+	else if (wcscmp(argv[1], L"running") == 0)
 		sy = &sy_running;
-	else if (STRCMP(argv[1], WIDE("date")) == 0)
+	else if (wcscmp(argv[1], L"date") == 0)
 		sy = &sy_date;
 	else {
-		cmderr(WIDE("Unknown style item."));
+		cmderr(L"Unknown style item.");
 		return;
 	}
 
 	style_clear(sy);
-	for (tok = STRTOK(argv[2], WIDE(","), &last); tok != NULL;
-	     tok = STRTOK(NULL, WIDE(","), &last)) {
+	for (tok = wcstok(argv[2], L",", &last); tok != NULL;
+	     tok = wcstok(NULL, L",", &last)) {
 		style_add(sy, tok, argv[3]);
 	}
 
@@ -74,10 +74,10 @@ WCHAR	*last, *tok;
 void
 c_bind(argc, argv)
 	size_t	argc;
-	WCHAR	**argv;
+	wchar_t	**argv;
 {
 	if (argc != 3) {
-		cmderr(WIDE("Usage: bind <key> <function>"));
+		cmderr(L"Usage: bind <key> <function>");
 		return;
 	}
 
@@ -87,10 +87,10 @@ c_bind(argc, argv)
 void
 c_macro(argc, argv)
 	size_t	argc;
-	WCHAR	**argv;
+	wchar_t	**argv;
 {
 	if (argc != 3) {
-		cmderr(WIDE("Usage: macro <key> <def>"));
+		cmderr(L"Usage: macro <key> <def>");
 		return;
 	}
 
@@ -100,35 +100,35 @@ c_macro(argc, argv)
 void
 c_set(argc, argv)
 	size_t	argc;
-	WCHAR	**argv;
+	wchar_t	**argv;
 {
 variable_t	*var;
 int		 val;
 
 	if (argc != 3) {
-		cmderr(WIDE("Usage: set <variable> <value>"));
+		cmderr(L"Usage: set <variable> <value>");
 		return;
 	}
 
 	if ((var = find_variable(argv[1])) == NULL) {
-		cmderr(WIDE("Unknown variable \"%"FMT_L"s\"."), argv[1]);
+		cmderr(L"Unknown variable \"%ls\".", argv[1]);
 		return;
 	}
 
 	switch (var->va_type) {
 	case VTYPE_BOOL:
-		if (STRCMP(argv[2], WIDE("true")) == 0 ||
-		    STRCMP(argv[2], WIDE("yes")) == 0 ||
-		    STRCMP(argv[2], WIDE("on")) == 0 ||
-		    STRCMP(argv[2], WIDE("1")) == 0) {
+		if (wcscmp(argv[2], L"true") == 0 ||
+		    wcscmp(argv[2], L"yes") == 0 ||
+		    wcscmp(argv[2], L"on") == 0 ||
+		    wcscmp(argv[2], L"1") == 0) {
 			val = 1;
-		} else if (STRCMP(argv[2], WIDE("false")) == 0 ||
-			   STRCMP(argv[2], WIDE("no")) == 0 ||
-			   STRCMP(argv[2], WIDE("off")) == 0 ||
-			   STRCMP(argv[2], WIDE("0")) == 0) {
+		} else if (wcscmp(argv[2], L"false") == 0 ||
+			   wcscmp(argv[2], L"no") == 0 ||
+			   wcscmp(argv[2], L"off") == 0 ||
+			   wcscmp(argv[2], L"0") == 0) {
 			val = 0;
 		} else {
-			cmderr(WIDE("Invalid value for boolean: \"%"FMT_L"s\"."), argv[2]);
+			cmderr(L"Invalid value for boolean: \"%ls\".", argv[2]);
 			return;
 		}
 
@@ -136,11 +136,11 @@ int		 val;
 		break;
 
 	case VTYPE_STRING:
-		*(WCHAR **)var->va_addr = STRDUP(argv[2]);
+		*(wchar_t **)var->va_addr = wcsdup(argv[2]);
 		break;
 
 	case VTYPE_INT:
-		*(int *)var->va_addr = STRTOL(argv[2], NULL, 0);
+		*(int *)var->va_addr = wcstol(argv[2], NULL, 0);
 		break;
 	}
 }

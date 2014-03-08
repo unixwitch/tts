@@ -16,15 +16,15 @@
 #include	"tailq.h"
 
 typedef struct tkey {
-	INT		 ky_code;
-	const WCHAR	*ky_name;
+	wint_t		 ky_code;
+	const wchar_t	*ky_name;
 } tkey_t;
 
 typedef struct binding {
-	INT		 bi_code;
+	wint_t		 bi_code;
 	tkey_t		*bi_key;
 	function_t	*bi_func;
-	WCHAR		*bi_macro;
+	wchar_t		*bi_macro;
 
 	TTS_TAILQ_ENTRY(binding) bi_entries;
 } binding_t;
@@ -32,7 +32,9 @@ typedef struct binding {
 typedef TTS_TAILQ_HEAD(bindlist, binding) binding_list_t;
 extern binding_list_t bindings;
 
-tkey_t *find_key(const WCHAR *name);
-void	bind_key(const WCHAR *key, const WCHAR *func, int is_macro);
+void	bind_defaults();
+tkey_t *find_key(const wchar_t *name);
+void	bind_key(const wchar_t *key, const wchar_t *func, int is_macro);
+
 
 #endif	/* !TTS_BINDINGS_H */

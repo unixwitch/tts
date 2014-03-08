@@ -22,34 +22,34 @@ style_t sy_header	= { 1, 0 },
 	sy_date		= { 6, 0 };
 
 static attrname_t attrnames[] = {
-	{ WIDE("normal"),	WA_NORMAL	},
-	{ WIDE("bold"),		WA_BOLD		},
-	{ WIDE("reverse"),	WA_REVERSE	},
-	{ WIDE("blink"),	WA_BLINK	},
-	{ WIDE("dim"),		WA_DIM		},
-	{ WIDE("underline"),	WA_UNDERLINE	},
-	{ WIDE("standout"),	WA_STANDOUT	}
+	{ L"normal",	WA_NORMAL	},
+	{ L"bold",		WA_BOLD		},
+	{ L"reverse",	WA_REVERSE	},
+	{ L"blink",	WA_BLINK	},
+	{ L"dim",		WA_DIM		},
+	{ L"underline",	WA_UNDERLINE	},
+	{ L"standout",	WA_STANDOUT	}
 };
 
 static colour_t colours[] = {
-	{ WIDE("black"),	COLOR_BLACK	},
-	{ WIDE("red"),		COLOR_RED	},
-	{ WIDE("green"),	COLOR_GREEN	},
-	{ WIDE("yellow"),	COLOR_YELLOW	},
-	{ WIDE("blue"),		COLOR_BLUE	},
-	{ WIDE("magenta"),	COLOR_MAGENTA	},
-	{ WIDE("cyan"),		COLOR_CYAN	},
-	{ WIDE("white"),	COLOR_WHITE	}
+	{ L"black",	COLOR_BLACK	},
+	{ L"red",		COLOR_RED	},
+	{ L"green",	COLOR_GREEN	},
+	{ L"yellow",	COLOR_YELLOW	},
+	{ L"blue",		COLOR_BLUE	},
+	{ L"magenta",	COLOR_MAGENTA	},
+	{ L"cyan",		COLOR_CYAN	},
+	{ L"white",	COLOR_WHITE	}
 };
 
 int
 attr_find(name, result)
-	const WCHAR	*name;
+	const wchar_t	*name;
 	attr_t		*result;
 {
 size_t	i;
 	for (i = 0; i < sizeof(attrnames) / sizeof(*attrnames); i++) {
-		if (STRCMP(attrnames[i].an_name, name) == 0) {
+		if (wcscmp(attrnames[i].an_name, name) == 0) {
 			*result = attrnames[i].an_value;
 			return 0;
 		}
@@ -60,12 +60,12 @@ size_t	i;
 
 int
 colour_find(name, result)
-	const WCHAR	*name;
+	const wchar_t	*name;
 	short		*result;
 {
 size_t	i;
 	for (i = 0; i < sizeof(colours) / sizeof(*colours); i++) {
-		if (STRCMP(colours[i].co_name, name) == 0) {
+		if (wcscmp(colours[i].co_name, name) == 0) {
 			*result = colours[i].co_value;
 			return 0;
 		}
@@ -85,7 +85,7 @@ style_clear(sy)
 int
 style_set(sy, fg, bg)
 	style_t		*sy;
-	const WCHAR	*fg, *bg;
+	const wchar_t	*fg, *bg;
 {
 	sy->sy_attrs = WA_NORMAL;
 	init_pair(sy->sy_pair, default_fg, default_bg);
@@ -95,7 +95,7 @@ style_set(sy, fg, bg)
 int
 style_add(sy, fg, bg)
 	style_t		*sy;
-	const WCHAR	*fg, *bg;
+	const wchar_t	*fg, *bg;
 {
 attr_t	at;
 short	colfg, colbg = default_bg;
@@ -119,10 +119,28 @@ apply_styles()
 {
 	wbkgd(statwin, style_bg(sy_status));
 	wattr_on(statwin, style_fg(sy_status), NULL);
-	drawstatus(WIDE(""));
+	drawstatus(L"");
 
 	wbkgd(titwin, style_bg(sy_header));
 	wattr_on(titwin, style_fg(sy_header), NULL);
 	drawheader();
 }
 
+void
+style_defaults(void)
+{
+	init_pair(1, default_fg, default_bg);
+	init_pair(2, default_fg, default_bg);
+	init_pair(3, default_fg, default_bg);
+	init_pair(4, default_fg, default_bg);
+	init_pair(5, default_fg, default_bg);
+	init_pair(6, default_fg, default_bg);
+
+	style_set(&sy_header, L"reverse", NULL);
+	style_set(&sy_status, L"normal", NULL);
+	style_set(&sy_entry, L"normal", NULL);
+	style_set(&sy_selected, L"normal", NULL);
+	style_set(&sy_running, L"bold", NULL);
+	style_set(&sy_date, L"underline", NULL);
+	apply_styles();
+}

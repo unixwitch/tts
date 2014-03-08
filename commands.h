@@ -16,18 +16,18 @@
 #include	"wide.h"
 
 typedef struct command {
-	const WCHAR	*cm_name;
-	void		(*cm_hdl) (size_t, WCHAR **);
+	const wchar_t	*cm_name;
+	void		(*cm_hdl) (size_t, wchar_t **);
 } command_t;
 
-command_t *find_command(const WCHAR *);
+command_t *find_command(const wchar_t *);
 
-void c_bind	(size_t, WCHAR **);
-void c_style	(size_t, WCHAR **);
-void c_set	(size_t, WCHAR **);
-void c_macro	(size_t, WCHAR **);
+void c_bind	(size_t, wchar_t **);
+void c_style	(size_t, wchar_t **);
+void c_set	(size_t, wchar_t **);
+void c_macro	(size_t, wchar_t **);
 
-void cmderr	(const WCHAR *, ...);
-void vcmderr	(const WCHAR *, va_list);
+void cmderr	(const wchar_t *, ...);
+void vcmderr	(const wchar_t *, va_list);
 
 #endif	/* !TTS_COMMANDS_H */

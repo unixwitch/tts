@@ -23,18 +23,18 @@ entry_t *running;
 
 entry_t *
 entry_new(desc)
-	const WCHAR	*desc;
+	const wchar_t	*desc;
 {
 entry_t	*en;
 	if ((en = calloc(1, sizeof(*en))) == NULL)
 		return NULL;
 
-	if (auto_nonbillable && STRSTR(desc, auto_nonbillable))
+	if (auto_nonbillable && wcsstr(desc, auto_nonbillable))
 		en->en_flags.efl_nonbillable = 1;
 
 	TTS_TAILQ_INSERT_HEAD(&entries, en, en_entries);
 
-	en->en_desc = STRDUP(desc);
+	en->en_desc = wcsdup(desc);
 	time(&en->en_created);
 
 	return en;

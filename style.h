@@ -20,15 +20,15 @@ typedef struct style {
 } style_t;
 
 #define style_fg(s)	(COLOR_PAIR((s).sy_pair) | (s).sy_attrs)
-#define style_bg(s)	((INT) ' ' | COLOR_PAIR((s).sy_pair) | ((s).sy_attrs & ~WA_UNDERLINE))
+#define style_bg(s)	((wint_t) ' ' | COLOR_PAIR((s).sy_pair) | ((s).sy_attrs & ~WA_UNDERLINE))
 
 typedef struct attrname {
-	const WCHAR	*an_name;
+	const wchar_t	*an_name;
 	attr_t		 an_value;
 } attrname_t;
 
 typedef struct colour {
-	const WCHAR	*co_name;
+	const wchar_t	*co_name;
 	short		 co_value;
 } colour_t;
 
@@ -41,13 +41,14 @@ extern style_t	sy_header,
 
 extern short default_fg, default_bg;
 
-int attr_find(const WCHAR *name, attr_t *result);
-int colour_find(const WCHAR *name, short *result);
+int	attr_find	(const wchar_t *name, attr_t *result);
+int	colour_find	(const wchar_t *name, short *result);
 
-void style_clear(style_t *);
-int style_set(style_t *, const WCHAR *fg, const WCHAR *bg);
-int style_add(style_t *, const WCHAR *fg, const WCHAR *bg);
+void	style_clear	(style_t *);
+int	style_set	(style_t *, const wchar_t *fg, const wchar_t *bg);
+int	style_add	(style_t *, const wchar_t *fg, const wchar_t *bg);
 
-void apply_styles(void);
+void	style_defaults	(void);
+void	apply_styles	(void);
 
 #endif	/* !TTS_STYLE_H */
