@@ -30,7 +30,7 @@ void	drawheader	(void);
 void	drawentries	(void);
 
 wchar_t	*prompt		(wchar_t const *, wchar_t const *, history_t *);
-int	 prduration	(wchar_t *prompt, int *h, int *m, int *s);
+time_t	 prduration	(wchar_t *prompt, time_t def);
 int	 yesno		(wchar_t const *);
 void	 errbox		(wchar_t const *, ...);
 void	 verrbox	(wchar_t const *, va_list);

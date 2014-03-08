@@ -332,9 +332,7 @@ wchar_t	*new;
 void
 kedtime()
 {
-wchar_t	*new, old[64];
 time_t	 n;
-int	 h, m, s;
 
 	if (!curent) {
 		drawstatus(L"No entry selected.");
@@ -344,22 +342,13 @@ int	 h, m, s;
 	n = curent->en_secs;
 	if (curent->en_started)
 		n += time(NULL) - curent->en_started;
-	h = n / (60 * 60);
-	n %= (60 * 60);
-	m = n / 60;
-	n %= 60;
-	s = n;
 
-	swprintf(old, wsizeof(old), L"%02d:%02d:%02d", h, m, s);
-	if ((new = prompt(L"Duration [HH:MM:SS]:", old, NULL)) == NULL)
-		return;
-
-	if (!swscanf(new, L"%d:%d:%d", &h, &m, &s)) {
-		free(new);
+	if ((n = prduration(L"Duration:", n)) == (time_t) -1) {
 		drawstatus(L"Invalid duration.");
+		return;
 	}
 
-	curent->en_secs = (h * 60 * 60) + (m * 60) + s;
+	curent->en_secs = n;
 	if (curent->en_started)
 		time(&curent->en_started);
 
@@ -421,47 +410,17 @@ entry_t	*en;
 void
 kaddtime()
 {
-wchar_t	*tstr;
-int	 h = 0, m = 0, s = 0, secs;
+time_t	 secs;
 	if (!curent) {
 		drawstatus(L"No entry selected.");
 		return;
 	}
 
-	if ((tstr = prompt(L"Time to add ([[HH:]MM:]SS):", NULL, NULL)) == NULL)
-		return;
-
-	if (!*tstr) {
-		drawstatus(L"");
-		free(tstr);
+	if ((secs = prduration(L"Time to add:", 0)) == (time_t) -1) {
+		drawstatus(L"Invalid time format.");
 		return;
 	}
 
-	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
-		h = 0;
-		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
-			m = 0;
-			if (swscanf(tstr, L"%d", &s) != 1) {
-				free(tstr);
-				drawstatus(L"Invalid time format.");
-				return;
-			}
-		}
-	}
-
-	free(tstr);
-
-	if (m >= 60) {
-		drawstatus(L"Minutes cannot be more than 59.");
-		return;
-	}
-
-	if (s >= 60) {
-		drawstatus(L"Seconds cannot be more than 59.");
-		return;
-	}
-
-	secs = s + m*60 + h*60*60;
 	curent->en_secs += secs;
 	save();
 }
@@ -469,48 +428,19 @@ int	 h = 0, m = 0, s = 0, secs;
 void
 kdeltime()
 {
-wchar_t	*tstr;
-int	 h = 0, m = 0, s = 0, secs;
+time_t	 secs;
 	if (!curent) {
 		drawstatus(L"No entry selected.");
 		return;
 	}
 
-	if ((tstr = prompt(L"Time to subtract, ([[HH:]MM:]SS):", NULL, NULL)) == NULL)
-		return;
-
-	if (!*tstr) {
-		drawstatus(L"");
-		free(tstr);
-		return;
-	}
-
-	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
-		h = 0;
-		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
-			m = 0;
-			if (swscanf(tstr, L"%d", &s) != 1) {
-				free(tstr);
-				drawstatus(L"Invalid time format.");
-				return;
-			}
-		}
-	}
-
-	free(tstr);
-	if (m >= 60) {
-		drawstatus(L"Minutes cannot be more than 59.");
-		return;
-	}
-
-	if (s >= 60) {
-		drawstatus(L"Seconds cannot be more than 59.");
+	if ((secs = prduration(L"Time to subtract:", 0)) == (time_t) -1) {
+		drawstatus(L"Invalid time format.");
 		return;
 	}
 
 	entry_account(curent);
 
-	secs = s + m*60 + h*60*60;
 	if (curent->en_secs - secs < 0) {
 		drawstatus(L"Remaining time cannot be less than zero.");
 		return;
@@ -526,7 +456,8 @@ kmerge()
 entry_t	*en, *ten;
 int	 nmarked = 0;
 wchar_t	 pr[128];
-int	 h, m, s = 0;
+wchar_t	*ct;
+int	 s = 0;
 
 	if (!curent) {
 		drawstatus(L"No entry selected.");
@@ -550,13 +481,11 @@ int	 h, m, s = 0;
 		return;
 	}
 
-	h = s / (60 * 60);
-	s %= (60 * 60);
-	m = s / 60;
-	s %= 60;
+	ct = maketime(s);
+	swprintf(pr, wsizeof(pr), L"Merge %d marked entries [%ls] into current entry?",
+			nmarked, ct);
+	free(ct);
 
-	swprintf(pr, wsizeof(pr), L"Merge %d marked entries [%02d:%02d:%02d] into current entry?",
-			nmarked, h, m, s);
 	if (!yesno(pr))
 		return;
 
@@ -699,15 +628,7 @@ wchar_t	*name;
 		return;
 	}
 
-	if (itime) {
-		duration = time(NULL) - itime;
-	} else {
-	int	 h, m, s;
-		if (prduration(L"Duration [HH:MM:SS]:", &h, &m, &s) == -1)
-			return;
-
-		duration = (h * 60 * 60) + (m * 60) + s;
-	}
+	duration = time(NULL) - itime;
 
 	itime = 0;
 	running->en_secs += (time(NULL) - running->en_started);

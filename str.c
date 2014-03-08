@@ -133,3 +133,81 @@ wchar_t	**p;
 	free(*vec);
 }
 
+time_t
+parsetime(tm)
+	wchar_t	*tm;
+{
+int	h = 0, m = 0, s = 0;
+time_t	i = 0, r = 0;
+
+/* The empty string is not a valid duration */
+	if (!*tm)
+		return (time_t) -1;
+/* Check for "hh:mm:ss" or "mm:ss" */
+	if (swscanf(tm, L"%d:%d:%d", &h, &m, &s) == 3)
+		return (h * 60 * 60) + (m * 60) + s;
+
+	if (swscanf(tm, L"%d:%d", &m, &s) == 2)
+		return (m * 60) + s;
+
+/*
+ * The string could either be a format like 3h10m, or a simle number like 47
+ * (meaning seconds), which is also handled here.  This is effectively an
+ * implementation of atoi with special meaning for 'h', 'm' and 's' characters.
+ *
+ * Note that we make no attempt to handle overflow.
+ */
+	for (; *tm; tm++) {
+		switch (*tm) {
+		case L'h':
+			r += i * (60 * 60);
+			i = 0;
+			continue;
+
+		case L'm':
+			r += i * 60;
+			i = 0;
+			continue;
+
+		case L's':
+			r += i;
+			i = 0;
+			continue;
+		}
+
+		if (wcschr(L"0123456789", *tm) == NULL)
+			return (time_t) -1;
+
+		i *= 10;
+		i += *tm - L'0';
+	}
+
+	return r + i;
+}
+
+wchar_t *
+maketime(tm)
+	time_t	tm;
+{
+wchar_t	res[64] = {};
+wchar_t	t[16];
+
+	if (tm >= (60 * 60)) {
+		swprintf(t, wsizeof(t), L"%dh", tm / (60 * 60));
+		wcslcat(res, t, sizeof(res));
+		tm %= (60 * 60);
+	}
+
+	if (tm >= 60) {
+		swprintf(t, wsizeof(t), L"%dm", tm / 60);
+		wcslcat(res, t, sizeof(res));
+		tm %= 60;
+	}
+
+	if (tm) {
+		swprintf(t, wsizeof(t), L"%ds", tm);
+		wcslcat(res, t, sizeof(res));
+	}
+
+	return wcsdup(res);
+}

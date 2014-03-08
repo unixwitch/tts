@@ -15,7 +15,9 @@
 
 #include	"wide.h"
 
-size_t tokenise(const wchar_t *, wchar_t ***result);
-void tokfree(wchar_t ***);
+size_t	 tokenise	(const wchar_t *, wchar_t ***result);
+void	 tokfree	(wchar_t ***);
+time_t	 parsetime	(wchar_t *);
+wchar_t	*maketime	(time_t);
 
 #endif	/* !TTS_STR_H */

@@ -14,6 +14,7 @@
 #include	"ui.h"
 #include	"tts.h"
 #include	"style.h"
+#include	"str.h"
 
 WINDOW *titwin, *statwin, *listwin;
 int in_curses;
@@ -601,15 +602,23 @@ chtype	 oldbg;
 	wbkgdset(listwin, oldbg);
 }
 
-int
-prduration(pr, hh, mm, ss)
+time_t
+prduration(pr, def)
 	wchar_t	*pr;
-	int	*hh, *mm, *ss;
+	time_t	def;
 {
+wchar_t	*defstr = NULL;
 wchar_t	*tstr;
-int	 h, m, s;
-	if ((tstr = prompt(pr, L"00:00:00", NULL)) == NULL)
+time_t	 ret;
+
+	defstr = maketime(def);
+
+	if ((tstr = prompt(pr, defstr, NULL)) == NULL) {
+		free(defstr);
 		return -1;
+	}
+
+	free(defstr);
 
 	if (!*tstr) {
 		drawstatus(L"No duration entered");
@@ -617,33 +626,13 @@ int	 h, m, s;
 		return -1;
 	}
 
-	if (swscanf(tstr, L"%d:%d:%d", &h, &m, &s) != 3) {
-		h = 0;
-		if (swscanf(tstr, L"%d:%d", &m, &s) != 2) {
-			m = 0;
-			if (swscanf(tstr, L"%d", &s) != 1) {
-				free(tstr);
-				drawstatus(L"Invalid time format.");
-				return -1;
-			}
-		}
+	if ((ret = parsetime(tstr)) == (time_t) -1) {
+		free(tstr);
+		drawstatus(L"Invalid time format.");
+		return -1;
 	}
 
 	free(tstr);
 
-	if (m >= 60) {
-		drawstatus(L"Minutes cannot be more than 59.");
-		return -1;
-	}
-
-	if (s >= 60) {
-		drawstatus(L"Seconds cannot be more than 59.");
-		return -1;
-	}
-
-	*hh = h;
-	*mm = m;
-	*ss = s;
-	return 0;
+	return ret;
 }
-
