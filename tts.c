@@ -739,7 +739,7 @@ input_macro(s)
 int
 input_char(win, c)
 	WINDOW	*win;
-	wchar_t	*c;
+	wint_t	*c;
 {
 wchar_t	*pr, *s, *r;
 	if (!macro_pos)
