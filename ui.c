@@ -443,19 +443,13 @@ chtype	 oldbg;
 		if (lastday != entry_day(en)) {
 		struct tm	*lt;
 		wchar_t		 lbl[128];
-		time_t		 itime = entry_time_for_day(entry_day(en), 1, 0),
-				 ntime = entry_time_for_day(entry_day(en), 0, 0),
-				 btime = entry_time_for_day(entry_day(en), 2, bill_increment);
-		int		 hi, mi, si,
-				 hn, mn, sn,
-				 hb, mb, sb,
-				 ht, mt, st;
+		wchar_t		*itime = maketime(entry_time_for_day(entry_day(en), 1, 0)),
+				*ntime = maketime(entry_time_for_day(entry_day(en), 0, 0)),
+				*btime = maketime(entry_time_for_day(entry_day(en), 2, bill_increment)),
+				*ttime = maketime(entry_time_for_day(entry_day(en), 1, 0) +
+						  entry_time_for_day(entry_day(en), 0, 0));
 		wchar_t		 hdrtext[256];
-
-			time_to_hms(itime, hi, mi, si);
-			time_to_hms(ntime, hn, mn, sn);
-			time_to_hms(btime, hb, mb, sb);
-			time_to_hms(itime + ntime, ht, mt, st);
+		int		 n = 0;
 
 			oldbg = getbkgd(listwin);
 			wbkgdset(listwin, style_bg(sy_entry));
@@ -474,18 +468,40 @@ chtype	 oldbg;
 			lt = localtime(&lastday);
 
 			wcsftime(lbl, wsizeof(lbl), L"%A, %d %B %Y", lt);
-			if (show_billable)
-				swprintf(hdrtext, wsizeof(hdrtext),
-					 L"%-30ls [I:%02d:%02d:%02d / "
-					 L"N:%02d:%02d:%02d / T:%02d:%02d:%02d / "
-					 L"B:%02d:%02d:%02d]",
-					 lbl, hi, mi, si, hn, mn, sn, ht, mt, st,
-					 hb, mb, sb);
-			else
-				swprintf(hdrtext, wsizeof(hdrtext),
-					 L"%-30ls [I:%02d:%02d:%02d / "
-					 L"N:%02d:%02d:%02d / T:%02d:%02d:%02d]",
-					 lbl, hi, mi, si, hn, mn, sn, ht, mt, st);
+			swprintf(hdrtext, wsizeof(hdrtext), L"%-30ls [", lbl);
+
+			if (*itime) {
+				wcslcat(hdrtext, L"I:", wsizeof(hdrtext));
+				wcslcat(hdrtext, itime, wsizeof(hdrtext));
+				free(itime);
+				n++;
+			}
+
+			if (*ntime) {
+				if (n++)
+					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
+				wcslcat(hdrtext, L"N:", wsizeof(hdrtext));
+				wcslcat(hdrtext, ntime, wsizeof(hdrtext));
+				free(ntime);
+			}
+
+			if (*ttime) {
+				if (n++)
+					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
+				wcslcat(hdrtext, L"T:", wsizeof(hdrtext));
+				wcslcat(hdrtext, ttime, wsizeof(hdrtext));
+				free(ttime);
+			}
+
+			if (*btime) {
+				if (n++)
+					wcslcat(hdrtext, L" ", wsizeof(hdrtext));
+				wcslcat(hdrtext, L"B:", wsizeof(hdrtext));
+				wcslcat(hdrtext, btime, wsizeof(hdrtext));
+				free(btime);
+			}
+
+			wcslcat(hdrtext, L"]", wsizeof(hdrtext));
 
 			wattr_on(listwin, style_fg(sy_date), NULL);
 			wbkgdset(listwin, style_bg(sy_date));
