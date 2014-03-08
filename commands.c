@@ -27,10 +27,10 @@ command_t *
 find_command(name)
 	const wchar_t	*name;
 {
-size_t	i;
-	for (i = 0; i < sizeof(commands) / sizeof(*commands); i++)
-		if (wcscmp(name, commands[i].cm_name) == 0)
-			return &commands[i];
+command_t	*c;
+	for (c = commands; c->cm_name; c++)
+		if (wcscmp(name, c->cm_name) == 0)
+			return c;
 	return NULL;
 }
 
