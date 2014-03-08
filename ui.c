@@ -623,7 +623,7 @@ wchar_t	*defstr = NULL;
 wchar_t	*tstr;
 time_t	 ret;
 
-	defstr = maketime(def, TIME_AHMS);
+	defstr = maketime(def, TIMEFMT_FOR_EDIT(time_format));
 
 	if ((tstr = prompt(pr, defstr, NULL)) == NULL) {
 		free(defstr);
