@@ -12,6 +12,7 @@
 #include	<wctype.h>
 
 #include	"str.h"
+#include	"tts.h"
 
 size_t
 tokenise(str, res)
