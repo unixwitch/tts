@@ -89,7 +89,7 @@ while (<INF>) {
 	if ($res->is_success) {
 		my $resp = decode_json($res->content);
 		if (defined($resp->{description})) {
-			print "Failed to Bling [$desc]: " . $resp->description . "\n";
+			print "Failed to Bling [$desc]: " . $resp->{description} . "\n";
 		} else {
 			if ($flags eq "-") {
 				$flags = "i";
