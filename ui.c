@@ -225,10 +225,26 @@ histent_t	*histpos = NULL;
 
 	for (;;) {
 	wint_t	c;
+	int	i, inpos;
 		wmove(pwin, 0, wcslen(msg) + 1);
-		waddwstr(pwin, input);
+		for (i = 0; i < wcslen(input); i++) {
+			if (input[i] == L'\t')
+				waddwstr(pwin, L"        ");
+			else {
+				wchar_t s[] = { input[i], '\0' };
+				waddwstr(pwin, s);
+			}
+		}
+		i--;
+
 		wclrtoeol(pwin);
-		wmove(pwin, 0, wcslen(msg) + 1 + pos);
+		for (i = 0, inpos = 0; i < wcslen(input) && i < pos; i++)
+			if (input[i] == L'\t')
+				inpos += 8;
+			else
+				inpos++;
+
+		wmove(pwin, 0, wcslen(msg) + 1 + inpos);
 		wrefresh(pwin);
 
 		if (input_char(pwin, &c) == ERR)
