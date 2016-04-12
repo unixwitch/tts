@@ -10,6 +10,7 @@
 
 #include	<stddef.h>
 #include	<wctype.h>
+#include	<time.h>
 
 #include	"str.h"
 #include	"tts.h"
