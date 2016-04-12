@@ -1,5 +1,12 @@
+*.o
 *.swp
 *~
+/Makefile
+/config.h
+/config.log
+/config.status
+/tts
+/vers.c
 /build
 /autom4te.cache
 /doconf
