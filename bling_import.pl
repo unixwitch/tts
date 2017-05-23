@@ -20,6 +20,7 @@
 
 use warnings;
 use strict;
+use LWP::Protocol::https;
 use LWP::UserAgent;
 use URI::Escape qw/uri_escape/;
 use POSIX qw/strftime/;
