@@ -482,7 +482,7 @@ int	 s = 0;
 	}
 
 	ct = maketime(s, time_format);
-	swprintf(pr, wsizeof(pr), L"Merge %d marked entries [%ls] into current entry?",
+	swprintf(pr, wsizeof(pr), L"Merge %d marked entries [%ls] into current entry",
 			nmarked, ct);
 	free(ct);
 
