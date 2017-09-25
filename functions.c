@@ -47,6 +47,22 @@ function_t funcs[] = {
 	{ }
 };
 
+static int
+valid_description(d)
+	const wchar_t *d;
+{
+	if (!d)
+		return 0;
+
+	while (iswspace(*d))
+		d++;
+
+	if (!*d)
+		return 0;
+
+	return 1;
+}
+
 void
 kquit()
 {
@@ -75,10 +91,12 @@ kadd()
 wchar_t	*name;
 entry_t	*en;
 	name = prompt(L"Description:", NULL, NULL);
-	if (!name || !*name) {
+
+	if (!valid_description(name)) {
 		free(name);
 		return;
 	}
+
 	en = entry_new(name);
 	entry_start(en);
 	curent = en;
@@ -92,7 +110,7 @@ wchar_t	*name;
 entry_t	*en;
 	name = prompt(L"Description:", NULL, NULL);
 
-	if (!name || !*name) {
+	if (!valid_description(name)) {
 		free(name);
 		return;
 	}
@@ -622,9 +640,9 @@ wchar_t	*name;
 		return;
 	}
 
-	name = prompt(L"Description:", NULL, NULL);
+	name = prompt(L"Description (<ENTER> to abandon interrupt):", NULL, NULL);
 
-	if (!name || !*name) {
+	if (!valid_description(name)) {
 		itime = 0;
 		free(name);
 		return;
