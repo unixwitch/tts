@@ -24,6 +24,9 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 AX_WITH_CURSES
+AS_IF([test "x$ax_cv_curses" != xyes], [
+	AC_ERROR([XSI/SVR4 curses is required to compile TTS])
+])
 oLIBS="$LIBS"
 LIBS="$LIBS $CURSES_LIB"
 AC_CHECK_FUNCS([use_default_colors wcslcpy wcslcat])

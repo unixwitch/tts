@@ -3870,6 +3870,11 @@ fi
 
     LIBS=$ax_saved_LIBS
 
+if test "x$ax_cv_curses" != xyes; then :
+
+	as_fn_error $? "XSI/SVR4 curses is required to compile TTS" "$LINENO" 5
+
+fi
 oLIBS="$LIBS"
 LIBS="$LIBS $CURSES_LIB"
 for ac_func in use_default_colors wcslcpy wcslcat
