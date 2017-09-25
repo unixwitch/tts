@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([RT/TTS], [D.84.1], [ft@le-fay.org])
+AC_INIT([TTS], [D.84.1], [ft@le-fay.org])
 AC_CONFIG_SRCDIR([tts.c])
 AC_CONFIG_HEADERS([config.h])
 
